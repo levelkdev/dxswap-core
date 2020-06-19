@@ -4,8 +4,7 @@
   "files": [
     "contracts",
     "build",
-    ".openzeppelin/project.json",
-    ".openzeppelin/kovan.json"
+    ".openzeppelin"
   ],
   "engines": {
     "node": ">=10"
