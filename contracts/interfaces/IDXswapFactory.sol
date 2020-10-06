@@ -17,5 +17,5 @@ interface IDXswapFactory {
     function setFeeTo(address) external;
     function setFeeToSetter(address) external;
     function setProtocolFee(uint8 _protocolFee) external;
-    function setSwapFee(address pair, uint32 swapFee) external;
+    function setSwapFee(address pair, uint8 swapFee) external;
 }

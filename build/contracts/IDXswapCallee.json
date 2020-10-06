@@ -41,14 +41,14 @@
     "absolutePath": "contracts/interfaces/IDXswapCallee.sol",
     "exportedSymbols": {
       "IDXswapCallee": [
-        1932
+        1737
       ]
     },
-    "id": 1933,
+    "id": 1738,
     "nodeType": "SourceUnit",
     "nodes": [
       {
-        "id": 1920,
+        "id": 1725,
         "literals": [
           "solidity",
           ">=",
@@ -56,7 +56,7 @@
           ".0"
         ],
         "nodeType": "PragmaDirective",
-        "src": "0:24:4"
+        "src": "0:24:3"
       },
       {
         "baseContracts": [],
@@ -64,9 +64,9 @@
         "contractKind": "interface",
         "documentation": null,
         "fullyImplemented": false,
-        "id": 1932,
+        "id": 1737,
         "linearizedBaseContracts": [
-          1932
+          1737
         ],
         "name": "IDXswapCallee",
         "nodeType": "ContractDefinition",
@@ -74,23 +74,23 @@
           {
             "body": null,
             "documentation": null,
-            "id": 1931,
+            "id": 1736,
             "implemented": false,
             "kind": "function",
             "modifiers": [],
             "name": "DXswapCall",
             "nodeType": "FunctionDefinition",
             "parameters": {
-              "id": 1929,
+              "id": 1734,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 1922,
+                  "id": 1727,
                   "name": "sender",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1931,
-                  "src": "76:14:4",
+                  "scope": 1736,
+                  "src": "76:14:3",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -98,10 +98,10 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 1921,
+                    "id": 1726,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "76:7:4",
+                    "src": "76:7:3",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -113,11 +113,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 1924,
+                  "id": 1729,
                   "name": "amount0",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1931,
-                  "src": "92:12:4",
+                  "scope": 1736,
+                  "src": "92:12:3",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -125,10 +125,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 1923,
+                    "id": 1728,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "92:4:4",
+                    "src": "92:4:3",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -139,11 +139,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 1926,
+                  "id": 1731,
                   "name": "amount1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1931,
-                  "src": "106:12:4",
+                  "scope": 1736,
+                  "src": "106:12:3",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -151,10 +151,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 1925,
+                    "id": 1730,
                     "name": "uint",
                     "nodeType": "ElementaryTypeName",
-                    "src": "106:4:4",
+                    "src": "106:4:3",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -165,11 +165,11 @@
                 },
                 {
                   "constant": false,
-                  "id": 1928,
+                  "id": 1733,
                   "name": "data",
                   "nodeType": "VariableDeclaration",
-                  "scope": 1931,
-                  "src": "120:19:4",
+                  "scope": 1736,
+                  "src": "120:19:3",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -177,10 +177,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 1927,
+                    "id": 1732,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "120:5:4",
+                    "src": "120:5:3",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -190,26 +190,26 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "75:65:4"
+              "src": "75:65:3"
             },
             "returnParameters": {
-              "id": 1930,
+              "id": 1735,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "149:0:4"
+              "src": "149:0:3"
             },
-            "scope": 1932,
-            "src": "56:94:4",
+            "scope": 1737,
+            "src": "56:94:3",
             "stateMutability": "nonpayable",
             "superFunction": null,
             "visibility": "external"
           }
         ],
-        "scope": 1933,
-        "src": "26:126:4"
+        "scope": 1738,
+        "src": "26:126:3"
       }
     ],
-    "src": "0:153:4"
+    "src": "0:153:3"
   },
   "bytecode": "0x",
   "deployedBytecode": "0x",

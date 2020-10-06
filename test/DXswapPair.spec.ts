@@ -9,7 +9,6 @@ import { AddressZero } from 'ethers/constants'
 
 const MINIMUM_LIQUIDITY = bigNumberify(10).pow(3)
 const ROUND_EXCEPTION = bigNumberify(10).pow(4)
-const FEE_DENOMINATOR = bigNumberify(10).pow(4)
 
 chai.use(solidity)
 
@@ -70,37 +69,33 @@ describe('DXswapPair', () => {
     await pair.mint(wallet.address, overrides)
   }
   const swapTestCases: BigNumber[][] = [
-    [1, 5, 10],
-    [1, 10, 5],
+    [1, 5, 10, '1662497915624478906'],
+    [1, 10, 5, '453305446940074565'],
 
-    [2, 5, 10],
-    [2, 10, 5],
+    [2, 5, 10, '2851015155847869602'],
+    [2, 10, 5, '831248957812239453'],
 
-    [1, 10, 10],
-    [1, 100, 100],
-    [1, 1000, 1000]
+    [1, 10, 10, '906610893880149131'],
+    [1, 100, 100, '987158034397061298'],
+    [1, 1000, 1000, '996006981039903216']
   ].map(a => a.map(n => (typeof n === 'string' ? bigNumberify(n) : expandTo18Decimals(n))))
   swapTestCases.forEach((swapTestCase, i) => {
     it(`getInputPrice:${i}`, async () => {
-      const [swapAmount, token0Amount, token1Amount] = swapTestCase
+      const [swapAmount, token0Amount, token1Amount, expectedOutputAmount] = swapTestCase
       await addLiquidity(token0Amount, token1Amount)
       await token0.transfer(pair.address, swapAmount)
-      const amountInWithFee = swapAmount.mul(FEE_DENOMINATOR.sub(15));
-      const numerator = amountInWithFee.mul(token1Amount);
-      const denominator = token0Amount.mul(FEE_DENOMINATOR).add(amountInWithFee);
-      const amountOut = numerator.div(denominator);
-      await expect(pair.swap(0, amountOut.add(1), wallet.address, '0x', overrides)).to.be.revertedWith(
+      await expect(pair.swap(0, expectedOutputAmount.add(1), wallet.address, '0x', overrides)).to.be.revertedWith(
         'DXswapPair: K'
       )
-      await pair.swap(0, amountOut, wallet.address, '0x', overrides)
+      await pair.swap(0, expectedOutputAmount, wallet.address, '0x', overrides)
     })
   })
 
   const optimisticTestCases: BigNumber[][] = [
-    ['998500000000000000', 5, 10, 1], // given amountIn, amountOut = floor(amountIn * .9985)
-    ['998500000000000000', 10, 5, 1],
-    ['998500000000000000', 5, 5, 1],
-    [1, 5, 5, '1001502253380070105'] // given amountOut, amountIn = ceiling(amountOut / .9985)
+    ['997000000000000000', 5, 10, 1], // given amountIn, amountOut = floor(amountIn * .997)
+    ['997000000000000000', 10, 5, 1],
+    ['997000000000000000', 5, 5, 1],
+    [1, 5, 5, '1003009027081243732'] // given amountOut, amountIn = ceiling(amountOut / .997)
   ].map(a => a.map(n => (typeof n === 'string' ? bigNumberify(n) : expandTo18Decimals(n))))
   optimisticTestCases.forEach((optimisticTestCase, i) => {
     it(`optimistic:${i}`, async () => {
@@ -110,7 +105,7 @@ describe('DXswapPair', () => {
       await expect(pair.swap(outputAmount.add(1), 0, wallet.address, '0x', overrides)).to.be.revertedWith(
         'DXswapPair: K'
       )
-      await pair.swap(outputAmount.sub(1), 0, wallet.address, '0x', overrides)
+      await pair.swap(outputAmount, 0, wallet.address, '0x', overrides)
     })
   })
 
@@ -183,7 +178,7 @@ describe('DXswapPair', () => {
     await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
     const tx = await pair.swap(expectedOutputAmount, 0, wallet.address, '0x', overrides)
     const receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq(76473)
+    expect(receipt.gasUsed).to.eq(76461)
   })
 
   it('burn', async () => {
@@ -279,13 +274,13 @@ describe('DXswapPair', () => {
     const expectedLiquidity = expandTo18Decimals(1000)
     await pair.transfer(pair.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
     await pair.burn(wallet.address, overrides)
-    expect(await pair.totalSupply()).to.eq(MINIMUM_LIQUIDITY.add('149850284580759'))
-    expect(await pair.balanceOf(other.address)).to.eq('149850284580759')
+    expect(await pair.totalSupply()).to.eq(MINIMUM_LIQUIDITY.add('249750499251388'))
+    expect(await pair.balanceOf(other.address)).to.eq('249750499251388')
 
     // using 1000 here instead of the symbolic MINIMUM_LIQUIDITY because the amounts only happen to be equal...
     // ...because the initial liquidity amounts were equal
-    expect(await token0.balanceOf(pair.address)).to.eq(bigNumberify(1000).add('149701010218466'))
-    expect(await token1.balanceOf(pair.address)).to.eq(bigNumberify(1000).add('150000112387782'))
+    expect(await token0.balanceOf(pair.address)).to.eq(bigNumberify(1000).add('249501683697445'))
+    expect(await token1.balanceOf(pair.address)).to.eq(bigNumberify(1000).add('250000187312969'))
   })
   
   it('feeTo:on:0.025', async () => {
@@ -349,13 +344,5 @@ describe('DXswapPair', () => {
       .to.eq(bigNumberify(1000).add('4750272337472507').div(ROUND_EXCEPTION))
     expect((await token1.balanceOf(pair.address)).div(ROUND_EXCEPTION))
       .to.eq(bigNumberify(1000).add('4759687103171089').div(ROUND_EXCEPTION))
-  })
-  
-  it('fail on trying to set swap fee higher than 10%', async () => {
-    await factory.setSwapFee(pair.address, 0)
-    await factory.setSwapFee(pair.address, 1000)
-    await expect(factory.setSwapFee(pair.address, 1001)).to.be.revertedWith(
-      'DXswapPair: FORBIDDEN_FEE'
-    )
   })
 })

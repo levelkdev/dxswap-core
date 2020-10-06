@@ -26,7 +26,7 @@ contract DXswapPair is IDXswapPair, DXswapERC20 {
     uint public price0CumulativeLast;
     uint public price1CumulativeLast;
     uint public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
-    uint32 public swapFee = 15; // uses 0.15% fee as default
+    uint8 public swapFee = 30; // uses 0.3% fee as default
     
     uint private unlocked = 1;
     modifier lock() {
@@ -71,9 +71,9 @@ contract DXswapPair is IDXswapPair, DXswapERC20 {
     }
     
     // called by the factory to set the swapFee
-    function setSwapFee(uint32 _swapFee) external {
+    function setSwapFee(uint8 _swapFee) external {
         require(msg.sender == factory, 'DXswapPair: FORBIDDEN'); // sufficient check
-        require(_swapFee <= 1000, 'DXswapPair: FORBIDDEN_FEE'); // fee percentage check
+        require(_swapFee <= 30, 'DXswapPair: FORBIDDEN_FEE'); // fee percentage check
         swapFee = _swapFee;
     }
 

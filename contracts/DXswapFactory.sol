@@ -6,7 +6,7 @@ import './DXswapPair.sol';
 contract DXswapFactory is IDXswapFactory {
     address public feeTo;
     address public feeToSetter;
-    uint8 public protocolFeeDenominator = 9; // uses ~0.10% of each swap fee
+    uint8 public protocolFeeDenominator = 5; // uses 0.05% (1/~6 of 0.30%) per trade as default
     bytes32 public constant INIT_CODE_PAIR_HASH = keccak256(abi.encodePacked(type(DXswapPair).creationCode));
 
     mapping(address => mapping(address => address)) public getPair;
@@ -55,7 +55,7 @@ contract DXswapFactory is IDXswapFactory {
         protocolFeeDenominator = _protocolFeeDenominator;
     }
     
-    function setSwapFee(address _pair, uint32 _swapFee) external {
+    function setSwapFee(address _pair, uint8 _swapFee) external {
         require(msg.sender == feeToSetter, 'DXswapFactory: FORBIDDEN');
         IDXswapPair(_pair).setSwapFee(_swapFee);
     }
