@@ -26,9 +26,15 @@ describe('DXswapFactory', () => {
   const loadFixture = createFixtureLoader(provider, [wallet, other])
 
   let factory: Contract
+  let feeSetter: Contract
   beforeEach(async () => {
     const fixture = await loadFixture(factoryFixture)
     factory = fixture.factory
+    feeSetter = fixture.feeSetter
+    
+    // Set feeToSetter to wallet.address to test the factory methdos from an ETH account
+    await feeSetter.setFeeTo(AddressZero);
+    await feeSetter.setFeeToSetter(wallet.address);
   })
 
   it('feeTo, feeToSetter, allPairsLength, INIT_CODE_PAIR_HASH', async () => {

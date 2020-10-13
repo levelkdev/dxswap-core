@@ -39,6 +39,7 @@ export class DXswapDeployer extends Contract {
     state(): TransactionObject<string>;
   };
   events: {
+    FeeSetterDeployed: ContractEvent<string>;
     PairDeployed: ContractEvent<string>;
     PairFactoryDeployed: ContractEvent<string>;
     allEvents: (

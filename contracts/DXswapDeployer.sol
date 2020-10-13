@@ -2,6 +2,7 @@ pragma solidity =0.5.16;
 
 import './DXswapFactory.sol';
 import './interfaces/IDXswapPair.sol';
+import './DXswapFeeSetter.sol';
 
 
 contract DXswapDeployer {
@@ -17,6 +18,7 @@ contract DXswapDeployer {
     
     TokenPair[] public initialTokenPairs;
     
+    event FeeSetterDeployed(address feeSetter);
     event PairFactoryDeployed(address factory);
     event PairDeployed(address pair);
         
@@ -59,7 +61,9 @@ contract DXswapDeployer {
             );
         }
         dxSwapFactory.setFeeTo(dxdaoAvatar);
-        dxSwapFactory.setFeeToSetter(dxdaoAvatar);
+        DXswapFeeSetter dxSwapFeeSetter = new DXswapFeeSetter(dxdaoAvatar, address(dxSwapFactory));
+        emit FeeSetterDeployed(address(dxSwapFeeSetter));
+        dxSwapFactory.setFeeToSetter(address(dxSwapFeeSetter));
         state = 2;
         msg.sender.transfer(address(this).balance);
     }

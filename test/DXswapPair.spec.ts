@@ -30,12 +30,16 @@ describe('DXswapPair', () => {
   let token0: Contract
   let token1: Contract
   let pair: Contract
+  let feeSetter: Contract
+
   beforeEach(async () => {
     const fixture = await loadFixture(pairFixture)
     factory = fixture.factory
     token0 = fixture.token0
     token1 = fixture.token1
     pair = fixture.pair
+    feeSetter = fixture.feeSetter
+    await feeSetter.setFeeTo(AddressZero);
   })
 
   it('mint', async () => {
@@ -265,7 +269,7 @@ describe('DXswapPair', () => {
   })
   
   it('feeTo:off, swapFee:0 attack', async () => {
-    await factory.setSwapFee(pair.address, 0)
+    await feeSetter.setSwapFee(pair.address, 0)
     const token0Amount = expandTo18Decimals(1000)
     const token1Amount = expandTo18Decimals(1000)
     await addLiquidity(token0Amount, token1Amount)
@@ -297,7 +301,7 @@ describe('DXswapPair', () => {
   })
 
   it('feeTo:on', async () => {
-    await factory.setFeeTo(other.address)
+    await feeSetter.setFeeTo(other.address)
 
     const token0Amount = expandTo18Decimals(1000)
     const token1Amount = expandTo18Decimals(1000)
@@ -321,8 +325,8 @@ describe('DXswapPair', () => {
   })
   
   it('feeTo:on:0.025', async () => {
-    await factory.setFeeTo(other.address)
-    await factory.setProtocolFee(11)
+    await feeSetter.setFeeTo(other.address)
+    await feeSetter.setProtocolFee(11)
 
     const token0Amount = expandTo18Decimals(1000)
     const token1Amount = expandTo18Decimals(1000)
@@ -352,9 +356,9 @@ describe('DXswapPair', () => {
   })
   
   it('feeTo:on:0.1:swapFee:0.20', async () => {
-    await factory.setFeeTo(other.address)
-    await factory.setProtocolFee(1)
-    await factory.setSwapFee(pair.address, 20)
+    await feeSetter.setFeeTo(other.address)
+    await feeSetter.setProtocolFee(1)
+    await feeSetter.setSwapFee(pair.address, 20)
 
     const token0Amount = expandTo18Decimals(1000)
     const token1Amount = expandTo18Decimals(1000)
@@ -384,9 +388,9 @@ describe('DXswapPair', () => {
   })
   
   it('fail on trying to set swap fee higher than 10%', async () => {
-    await factory.setSwapFee(pair.address, 0)
-    await factory.setSwapFee(pair.address, 1000)
-    await expect(factory.setSwapFee(pair.address, 1001)).to.be.revertedWith(
+    await feeSetter.setSwapFee(pair.address, 0)
+    await feeSetter.setSwapFee(pair.address, 1000)
+    await expect(feeSetter.setSwapFee(pair.address, 1001)).to.be.revertedWith(
       'DXswapPair: FORBIDDEN_FEE'
     )
   })
