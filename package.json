@@ -3,15 +3,12 @@
   "version": "0.1.1",
   "files": [
     "contracts",
-    "build",
-    ".openzeppelin/project.json",
-    ".openzeppelin/kovan.json"
+    "build"
   ],
   "engines": {
     "node": ">=10"
   },
   "devDependencies": {
-    "@openzeppelin/cli": "^2.8.2",
     "@types/chai": "^4.2.6",
     "@types/mocha": "^5.2.7",
     "chai": "^4.2.0",
@@ -32,7 +29,7 @@
     "lint:fix": "yarn prettier ./test/*.ts --write",
     "clean": "rimraf ./build/",
     "precompile": "yarn clean",
-    "compile": "npx oz compile",
+    "compile": "waffle .waffle.json",
     "pretest": "yarn compile",
     "test": "mocha",
     "prepublishOnly": "yarn test",

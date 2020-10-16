@@ -7,8 +7,8 @@ import { solidity, MockProvider, createFixtureLoader, deployContract } from 'eth
 import { getCreate2Address } from './shared/utilities'
 import { pairFixture } from './shared/fixtures'
 
-import DXswapPair from '../build/contracts/DXswapPair.json'
-import DXswapFeeSetter from '../build/contracts/DXswapFeeSetter.json'
+import DXswapPair from '../build/DXswapPair.json'
+import DXswapFeeSetter from '../build/DXswapFeeSetter.json'
 
 chai.use(solidity)
 

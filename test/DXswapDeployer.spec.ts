@@ -6,10 +6,10 @@ import { solidity, MockProvider, deployContract } from 'ethereum-waffle'
 import { getCreate2Address, expandTo18Decimals } from './shared/utilities'
 import { factoryFixture } from './shared/fixtures'
 
-import ERC20 from '../build/contracts/ERC20.json'
-import DXswapDeployer from '../build/contracts/DXswapDeployer.json'
-import DXswapFactory from '../build/contracts/DXswapFactory.json'
-import DXswapPair from '../build/contracts/DXswapPair.json'
+import ERC20 from '../build/ERC20.json'
+import DXswapDeployer from '../build/DXswapDeployer.json'
+import DXswapFactory from '../build/DXswapFactory.json'
+import DXswapPair from '../build/DXswapPair.json'
 
 chai.use(solidity)
 
@@ -28,7 +28,7 @@ describe('DXswapDeployer', () => {
   let token0: Contract
   let token1: Contract
   let token2: Contract
-  const pairBytecode = DXswapPair.bytecode
+  const pairBytecode = "0x"+DXswapPair.bytecode
   
   it('Execute migration with intial pairs', async () => {
     
