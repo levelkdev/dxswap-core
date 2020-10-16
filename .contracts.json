@@ -1,0 +1,7 @@
+{
+  "rinkeby" : {
+    "deployer": "0xe21442C140B788b572126E397CC35b82A1593e32",
+    "factory": "0xc590D61Bf56B8E33D5E3563a4C37af748FEa2CA4",
+    "feeSetter": "0x57Cca631eb9Da7225dfd96CA15F4e944F46e35A6"
+  }
+}
