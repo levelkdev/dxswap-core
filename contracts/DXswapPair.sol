@@ -1,4 +1,4 @@
-pragma solidity =0.5.16;
+pragma solidity 0.8.12;
 
 import './interfaces/IDXswapPair.sol';
 import './DXswapERC20.sol';
@@ -36,17 +36,6 @@ contract DXswapPair is IDXswapPair, DXswapERC20 {
         unlocked = 1;
     }
 
-    function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
-        _reserve0 = reserve0;
-        _reserve1 = reserve1;
-        _blockTimestampLast = blockTimestampLast;
-    }
-
-    function _safeTransfer(address token, address to, uint value) private {
-        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
-        require(success && (data.length == 0 || abi.decode(data, (bool))), 'DXswapPair: TRANSFER_FAILED');
-    }
-
     event Mint(address indexed sender, uint amount0, uint amount1);
     event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
     event Swap(
@@ -58,6 +47,17 @@ contract DXswapPair is IDXswapPair, DXswapERC20 {
         address indexed to
     );
     event Sync(uint112 reserve0, uint112 reserve1);
+
+    function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {
+        _reserve0 = reserve0;
+        _reserve1 = reserve1;
+        _blockTimestampLast = blockTimestampLast;
+    }
+
+    function _safeTransfer(address token, address to, uint value) private {
+        (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, value));
+        require(success && (data.length == 0 || abi.decode(data, (bool))), 'DXswapPair: TRANSFER_FAILED');
+    }
 
     constructor() public {
         factory = msg.sender;
@@ -79,7 +79,7 @@ contract DXswapPair is IDXswapPair, DXswapERC20 {
 
     // update reserves and, on the first call per block, price accumulators
     function _update(uint balance0, uint balance1, uint112 _reserve0, uint112 _reserve1) private {
-        require(balance0 <= uint112(-1) && balance1 <= uint112(-1), 'DXswapPair: OVERFLOW');
+        require(balance0 <= 2^112 - 1 && balance1 <= 2^112 - 1, 'DXswapPair: OVERFLOW');
         uint32 blockTimestamp = uint32(block.timestamp % 2**32);
         uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
         if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {

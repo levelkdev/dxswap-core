@@ -1,8 +1,6 @@
 pragma solidity >=0.5.0;
 
 interface IDXswapFactory {
-    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
-
     function INIT_CODE_PAIR_HASH() external pure returns (bytes32);
     function feeTo() external view returns (address);
     function protocolFeeDenominator() external view returns (uint8);

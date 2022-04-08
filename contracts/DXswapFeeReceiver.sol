@@ -1,4 +1,4 @@
-pragma solidity =0.5.16;
+pragma solidity 0.8.12;
 
 import './interfaces/IDXswapFactory.sol';
 import './interfaces/IDXswapPair.sol';
@@ -26,7 +26,7 @@ contract DXswapFeeReceiver {
         fallbackReceiver = _fallbackReceiver;
     }
     
-    function() external payable {}
+    fallback() external payable {}
 
     function transferOwnership(address newOwner) external {
         require(msg.sender == owner, 'DXswapFeeReceiver: FORBIDDEN');
@@ -58,12 +58,12 @@ contract DXswapFeeReceiver {
     // Taken from DXswapLibrary, removed the factory parameter
     function pairFor(address tokenA, address tokenB) internal view returns (address pair) {
         (address token0, address token1) = sortTokens(tokenA, tokenB);
-        pair = address(uint(keccak256(abi.encodePacked(
+        pair =  address(uint160(uint256(keccak256(abi.encodePacked(
             hex'ff',
             factory,
             keccak256(abi.encodePacked(token0, token1)),
             hex'd306a548755b9295ee49cc729e13ca4a45e00199bbd890fa146da43a50571776' // init code hash
-        ))));
+        )))));
     }
     
     // Done with code form DXswapRouter and DXswapLibrary, removed the deadline argument

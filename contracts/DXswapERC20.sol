@@ -1,4 +1,4 @@
-pragma solidity =0.5.16;
+pragma solidity 0.8.12;
 
 import './interfaces/IDXswapERC20.sol';
 import './libraries/SafeMath.sol';
@@ -24,7 +24,7 @@ contract DXswapERC20 is IDXswapERC20 {
     constructor() public {
         uint chainId;
         assembly {
-            chainId := chainid
+            chainId := chainid()
         }
         DOMAIN_SEPARATOR = keccak256(
             abi.encode(
@@ -60,25 +60,25 @@ contract DXswapERC20 is IDXswapERC20 {
         emit Transfer(from, to, value);
     }
 
-    function approve(address spender, uint value) external returns (bool) {
+    function approve(address spender, uint value) external override returns (bool) {
         _approve(msg.sender, spender, value);
         return true;
     }
 
-    function transfer(address to, uint value) external returns (bool) {
+    function transfer(address to, uint value) external override returns (bool) {
         _transfer(msg.sender, to, value);
         return true;
     }
 
-    function transferFrom(address from, address to, uint value) external returns (bool) {
-        if (allowance[from][msg.sender] != uint(-1)) {
+    function transferFrom(address from, address to, uint value) external override returns (bool) {
+        if (allowance[from][msg.sender] != 2^256 - 1) {
             allowance[from][msg.sender] = allowance[from][msg.sender].sub(value);
         }
         _transfer(from, to, value);
         return true;
     }
 
-    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external {
+    function permit(address owner, address spender, uint value, uint deadline, uint8 v, bytes32 r, bytes32 s) external override {
         require(deadline >= block.timestamp, 'DXswapERC20: EXPIRED');
         bytes32 digest = keccak256(
             abi.encodePacked(
