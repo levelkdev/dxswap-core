@@ -4,4 +4,6 @@ contracts/.flattened
 .env
 
 artifacts
+artifacts-zk
 cache
+cache-zk

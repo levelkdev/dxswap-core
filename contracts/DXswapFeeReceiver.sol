@@ -56,6 +56,7 @@ contract DXswapFeeReceiver {
 
     // Calculates the CREATE2 address for a pair without making any external calls
     // Taken from DXswapLibrary, removed the factory parameter
+    // FIXME: change the init code hash
     function pairFor(address tokenA, address tokenB) internal view returns (address pair) {
         (address token0, address token1) = sortTokens(tokenA, tokenB);
         pair =  address(uint160(uint256(keccak256(abi.encodePacked(

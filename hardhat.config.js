@@ -3,6 +3,9 @@ require('@nomiclabs/hardhat-truffle5')
 require('@matterlabs/hardhat-zksync-deploy')
 require('@matterlabs/hardhat-zksync-solc')
 require('./tasks/deploy-zksync')
+require('./tasks/deploy-multicall')
+require('./tasks/get-init-code-hash')
+require('./tasks/get-pair-address')
 
 const infuraId = process.env.INFURA_ID
 const accounts = process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : []
@@ -46,6 +49,12 @@ module.exports = {
     },
     xdai: {
       url: 'https://rpc.xdaichain.com/',
+      accounts,
+      gasPrice: 1000000000,
+      timeout: 100000
+    },
+    zkSyncV2: {
+      url: 'https://zksync2-testnet.zksync.dev',
       accounts,
       gasPrice: 1000000000,
       timeout: 100000

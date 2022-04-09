@@ -1,7 +1,6 @@
 const { task } = require('hardhat/config')
 const { Deployer } = require('@matterlabs/hardhat-zksync-deploy')
-const { utils, Wallet } = require('zksync-web3')
-const ethers = require('ethers')
+const { Wallet } = require('zksync-web3')
 
 task('deploy', 'Deploys the whole contracts suite and optionally verifies source code on Etherscan')
   .addParam('ownerAddress', 'An address that will become the owner of the contracts after deployment.')
@@ -10,9 +9,7 @@ task('deploy', 'Deploys the whole contracts suite and optionally verifies source
     const { nativeAssetWrapperAddress, ownerAddress } = taskArguments
 
     const wallet = new Wallet(process.env.PRIVATE_KEY)
-    console.log('HERE')
     const deployer = new Deployer(hre, wallet)
-    console.log('HERE 2')
 
     const accountAddress = wallet.address
 
