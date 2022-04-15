@@ -5,7 +5,7 @@ import { bigNumberify } from 'ethers/utils'
 import { solidity, MockProvider, createFixtureLoader } from 'ethereum-waffle'
 
 import { getCreate2Address } from './shared/utilities'
-import { factoryFixture } from './shared/fixtures'
+import { factoryFixture, pairFixture } from './shared/fixtures'
 
 import DXswapPair from '../build/DXswapPair.json'
 
@@ -31,7 +31,7 @@ describe('DXswapFactory', () => {
     const fixture = await loadFixture(factoryFixture)
     factory = fixture.factory
     feeSetter = fixture.feeSetter
-    
+
     // Set feeToSetter to wallet.address to test the factory methdos from an ETH account
     await feeSetter.setFeeTo(AddressZero);
     await feeSetter.setFeeToSetter(wallet.address);
@@ -41,11 +41,11 @@ describe('DXswapFactory', () => {
     expect(await factory.feeTo()).to.eq(AddressZero)
     expect(await factory.feeToSetter()).to.eq(wallet.address)
     expect(await factory.allPairsLength()).to.eq(0)
-    expect(await factory.INIT_CODE_PAIR_HASH()).to.eq('0xd306a548755b9295ee49cc729e13ca4a45e00199bbd890fa146da43a50571776')
+    expect(await factory.INIT_CODE_PAIR_HASH()).to.eq('0x0a6294cc1920e3a117b957dadd1262548bec1c7b7f22ddfcd3311623d88004b3')
   })
 
   async function createPair(tokens: [string, string]) {
-    const bytecode = "0x"+DXswapPair.bytecode
+    const bytecode = "0x" + DXswapPair.bytecode
     const create2Address = getCreate2Address(factory.address, tokens, bytecode)
     await expect(factory.createPair(...tokens))
       .to.emit(factory, 'PairCreated')
@@ -75,7 +75,7 @@ describe('DXswapFactory', () => {
   it('createPair:gas', async () => {
     const tx = await factory.createPair(...TEST_ADDRESSES)
     const receipt = await tx.wait()
-    expect(receipt.gasUsed).to.eq(2136142)
+    expect(receipt.gasUsed).to.eq(2241653)
   })
 
   it('setFeeTo', async () => {

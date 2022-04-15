@@ -267,18 +267,18 @@ describe('DXswapPair', () => {
     await pair.connect(wallet).burn(wallet.address, overrides)
     expect(await pair.totalSupply()).to.eq(MINIMUM_LIQUIDITY)
   })
-  
+
   it('feeTo:off, swapFee:0 attack', async () => {
     await feeSetter.setSwapFee(pair.address, 0)
     const token0Amount = expandTo18Decimals(1000)
     const token1Amount = expandTo18Decimals(1000)
     await addLiquidity(token0Amount, token1Amount)
-    
+
     expect(await token0.balanceOf(pair.address)).to.eq(expandTo18Decimals(1000))
     expect(await token1.balanceOf(pair.address)).to.eq(expandTo18Decimals(1000))
     expect(await token0.balanceOf(wallet.address)).to.eq(expandTo18Decimals(9000))
     expect(await token1.balanceOf(wallet.address)).to.eq(expandTo18Decimals(9000))
-    
+
     // Attack pool
     await token1.transfer(pair.address, expandTo18Decimals(1))
     await expect(pair.connect(wallet).swap(expandTo18Decimals(999), 0, wallet.address, '0x', overrides)).to.be.revertedWith(
@@ -292,8 +292,8 @@ describe('DXswapPair', () => {
     expect(await token0.balanceOf(pair.address)).to.eq(expandTo18Decimals(1001))
     expect(await token1.balanceOf(pair.address)).to.eq(expandTo18Decimals(1001))
     expect(await token0.balanceOf(wallet.address)).to.eq(expandTo18Decimals(8999))
-    expect(await token1.balanceOf(wallet.address)).to.eq(expandTo18Decimals(8999)) 
-    
+    expect(await token1.balanceOf(wallet.address)).to.eq(expandTo18Decimals(8999))
+
     const expectedLiquidity = expandTo18Decimals(1000)
     await pair.connect(wallet).transfer(pair.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
     await pair.connect(wallet).burn(wallet.address, overrides)
@@ -323,7 +323,7 @@ describe('DXswapPair', () => {
     expect(await token0.balanceOf(pair.address)).to.eq(bigNumberify(1000).add('149701010218466'))
     expect(await token1.balanceOf(pair.address)).to.eq(bigNumberify(1000).add('150000112387782'))
   })
-  
+
   it('feeTo:on:0.025', async () => {
     await feeSetter.setFeeTo(other.address)
     await feeSetter.setProtocolFee(11)
@@ -354,7 +354,7 @@ describe('DXswapPair', () => {
     expect((await token1.balanceOf(pair.address)).div(ROUND_EXCEPTION))
       .to.eq(bigNumberify(1000).add('125000093656485').div(ROUND_EXCEPTION))
   })
-  
+
   it('feeTo:on:0.1:swapFee:0.20', async () => {
     await feeSetter.setFeeTo(other.address)
     await feeSetter.setProtocolFee(1)
@@ -386,7 +386,7 @@ describe('DXswapPair', () => {
     expect((await token1.balanceOf(pair.address)).div(ROUND_EXCEPTION))
       .to.eq(bigNumberify(1000).add('4759687103171089').div(ROUND_EXCEPTION))
   })
-  
+
   it('fail on trying to set swap fee higher than 10%', async () => {
     await feeSetter.setSwapFee(pair.address, 0)
     await feeSetter.setSwapFee(pair.address, 1000)
@@ -394,4 +394,30 @@ describe('DXswapPair', () => {
       'DXswapPair: FORBIDDEN_FEE'
     )
   })
+
+  it('fail on trying to set percent fee to external recipient higher than 50%', async () => {
+    expect(await pair.percentFeeToExternalRecipient())
+      .to.eq(0)
+    await feeSetter.setPercentFeeToExternalRecipient(pair.address, 5000)
+    expect(await pair.percentFeeToExternalRecipient())
+      .to.eq(5000)
+    await feeSetter.setPercentFeeToExternalRecipient(pair.address, 100)
+    expect(await pair.percentFeeToExternalRecipient())
+      .to.eq(100)
+    await expect(feeSetter.setPercentFeeToExternalRecipient(pair.address, 5001)).to.be.revertedWith(
+      'DXswapPair: FORBIDDEN_FEE_SPLIT'
+    )
+  })
+
+  it('set external fee recipient', async () => {
+    expect(await pair.externalFeeRecipient())
+      .to.eq(AddressZero)
+    await feeSetter.setExternalFeeRecipient(pair.address, other.address)
+    expect(await pair.externalFeeRecipient())
+      .to.eq(other.address)
+    await expect(feeSetter.connect(other).setExternalFeeRecipient(pair.address, wallet.address)).to.be.revertedWith(
+      'DXswapFeeSetter: FORBIDDEN'
+    )
+  })
+
 })
