@@ -14,14 +14,14 @@ const FEE_DENOMINATOR = bigNumberify(10).pow(4)
 chai.use(solidity)
 
 const overrides = {
-  gasLimit: 9999999
+  gasLimit: 15000000
 }
 
 describe('DXswapPair', () => {
   const provider = new MockProvider({
     hardfork: 'istanbul',
     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-    gasLimit: 9999999
+    gasLimit: 15000000
   })
   const [dxdao, wallet, protocolFeeReceiver, other] = provider.getWallets()
   const loadFixture = createFixtureLoader(provider, [dxdao, wallet, protocolFeeReceiver])

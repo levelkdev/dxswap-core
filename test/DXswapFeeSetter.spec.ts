@@ -21,7 +21,7 @@ describe('DXswapFeeSetter', () => {
   const provider = new MockProvider({
     hardfork: 'istanbul',
     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-    gasLimit: 9999999
+    gasLimit: 15000000
   })
   const [dxdao, pairOwner, protocolFeeReceiver, other] = provider.getWallets()
   const loadFixture = createFixtureLoader(provider, [dxdao, other, protocolFeeReceiver])
@@ -57,24 +57,24 @@ describe('DXswapFeeSetter', () => {
     await feeSetter.connect(dxdao).setFeeToSetter(other.address)
     await expect(feeSetter.connect(dxdao).setFeeTo(dxdao.address)).to.be.revertedWith('DXswapFactory: FORBIDDEN')
   })
-  
+
   it('setProtocolFee', async () => {
     // Should not allow to setProtocolFee from other address taht is not owner calling feeSetter
     await expect(feeSetter.connect(other).setProtocolFee(5)).to.be.revertedWith('DXswapFeeSetter: FORBIDDEN')
     await feeSetter.connect(dxdao).setProtocolFee(5)
     expect(await factory.protocolFeeDenominator()).to.eq(5)
-    
+
     // If feeToSetter changes it will will fail in DXswapFactory check when trying to setProtocolFee from FeeSetter.
     await feeSetter.connect(dxdao).setFeeToSetter(other.address)
     await expect(feeSetter.connect(dxdao).setProtocolFee(5)).to.be.revertedWith('DXswapFactory: FORBIDDEN')
   })
-  
+
   it('setSwapFee', async () => {
     // Should not allow to setSwapFee from other address taht is not owner calling feeSetter
     await expect(feeSetter.connect(other).setSwapFee(pair.address, 5)).to.be.revertedWith('DXswapFeeSetter: FORBIDDEN')
     await feeSetter.connect(dxdao).setSwapFee(pair.address, 5)
     expect(await pair.swapFee()).to.eq(5)
-    
+
     // If ownership of the pair is given to other address both addresses (FeeSetter owner and Pair owner) should be
     // able to change the swap fee
     await expect(feeSetter.connect(pairOwner).setSwapFee(pair.address, 5)).to.be.revertedWith('DXswapFeeSetter: FORBIDDEN')
@@ -83,7 +83,7 @@ describe('DXswapFeeSetter', () => {
     expect(await pair.swapFee()).to.eq(3)
     await feeSetter.connect(dxdao).setSwapFee(pair.address, 7)
     expect(await pair.swapFee()).to.eq(7)
-    
+
     // If ownership of the pair is removed by setting it to zero the pair owner should not be able to change the 
     // fee anymore.
     await feeSetter.connect(dxdao).transferPairOwnership(pair.address, AddressZero)
@@ -93,7 +93,7 @@ describe('DXswapFeeSetter', () => {
     await feeSetter.connect(dxdao).setFeeToSetter(other.address)
     await expect(feeSetter.connect(dxdao).setSwapFee(pair.address, 5)).to.be.revertedWith('DXswapFactory: FORBIDDEN')
   })
-  
+
   it('setFeeToSetter', async () => {
     // Should not allow to setFeeToSetter from other address taht is not owner calling feeSetter
     await expect(feeSetter.connect(other).setFeeToSetter(other.address)).to.be.revertedWith('DXswapFeeSetter: FORBIDDEN')

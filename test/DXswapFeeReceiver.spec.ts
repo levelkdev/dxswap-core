@@ -25,10 +25,10 @@ describe('DXswapFeeReceiver', () => {
   const provider = new MockProvider({
     hardfork: 'istanbul',
     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-    gasLimit: 9999999
+    gasLimit: 15000000
   })
   const overrides = {
-    gasLimit: 9999999
+    gasLimit: 15000000
   }
   const [dxdao, wallet, protocolFeeReceiver, other, externalFeeRecipient] = provider.getWallets()
   const loadFixture = createFixtureLoader(provider, [dxdao, wallet, protocolFeeReceiver])
@@ -81,6 +81,7 @@ describe('DXswapFeeReceiver', () => {
   let token0: Contract
   let token1: Contract
   let pair: Contract
+  let wethToken0Pair: Contract
   let wethToken1Pair: Contract
   let WETH: Contract
   let feeSetter: Contract
@@ -91,6 +92,7 @@ describe('DXswapFeeReceiver', () => {
     token0 = fixture.token0
     token1 = fixture.token1
     pair = fixture.pair
+    wethToken0Pair = fixture.wethToken0Pair
     wethToken1Pair = fixture.wethToken1Pair
     WETH = fixture.WETH
     feeSetter = fixture.feeSetter

@@ -47,6 +47,7 @@ interface PairFixture extends FactoryFixture {
   token0: Contract
   token1: Contract
   pair: Contract
+  wethToken0Pair: Contract
   wethToken1Pair: Contract
 }
 
@@ -63,9 +64,9 @@ export async function pairFixture(provider: Web3Provider, [dxdao, wallet, ethRec
     ethReceiver.address,
     dxdao.address,
     WETH.address,
-    [token0.address, token1.address],
-    [token1.address, WETH.address],
-    [15, 15],
+    [token0.address, token0.address, token1.address],
+    [token1.address, WETH.address, WETH.address],
+    [15, 15, 15],
   ], overrides
   )
 
@@ -85,10 +86,14 @@ export async function pairFixture(provider: Web3Provider, [dxdao, wallet, ethRec
     await factory.getPair(token0.address, token1.address),
     JSON.stringify(DXswapPair.abi), provider
   ).connect(dxdao)
+  const wethToken0Pair = new Contract(
+    await factory.getPair(token0.address, WETH.address),
+    JSON.stringify(DXswapPair.abi), provider
+  ).connect(dxdao)
   const wethToken1Pair = new Contract(
     await factory.getPair(token1.address, WETH.address),
     JSON.stringify(DXswapPair.abi), provider
   ).connect(dxdao)
 
-  return { factory, feeSetter, feeReceiver, WETH, token0, token1, pair, wethToken1Pair }
+  return { factory, feeSetter, feeReceiver, WETH, token0, token1, pair, wethToken0Pair, wethToken1Pair }
 }
