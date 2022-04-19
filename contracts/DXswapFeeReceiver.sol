@@ -14,7 +14,7 @@ contract DXswapFeeReceiver {
     address public WETH;
     address public ethReceiver;
     address public fallbackReceiver;
-    uint32 public maxSwapPriceImpact = 300; // uses default 3% (1% is 100) as max allowed price impact for takeProtocolFee swap
+    uint32 public maxSwapPriceImpact = 100; // uses default 1% as max allowed price impact for takeProtocolFee swap
 
     constructor(
         address _owner,
@@ -32,11 +32,13 @@ contract DXswapFeeReceiver {
 
     function() external payable {}
 
+    // called by the owner to set the new owner
     function transferOwnership(address newOwner) external {
         require(msg.sender == owner, 'DXswapFeeReceiver: FORBIDDEN');
         owner = newOwner;
     }
 
+    // called by the owner to change receivers addresses
     function changeReceivers(address _ethReceiver, address _fallbackReceiver) external {
         require(msg.sender == owner, 'DXswapFeeReceiver: FORBIDDEN');
         ethReceiver = _ethReceiver;
@@ -85,6 +87,7 @@ contract DXswapFeeReceiver {
         (uint256 reserve0, uint256 reserve1, ) = pairToUse.getReserves();
         (uint256 reserveIn, uint256 reserveOut) = fromToken < WETH ? (reserve0, reserve1) : (reserve1, reserve0);
 
+        require(reserveIn > 0 && reserveOut > 0, 'DXswapFeeReceiver: INSUFFICIENT_LIQUIDITY'); // should never happen since pool was checked before
         uint256 amountInWithFee = amountIn.mul(uint256(10000).sub(pairToUse.swapFee()));
         uint256 numerator = amountInWithFee.mul(reserveOut);
         uint256 denominator = reserveIn.mul(10000).add(amountInWithFee);
@@ -125,19 +128,18 @@ contract DXswapFeeReceiver {
         address token,
         uint256 amount
     ) internal {
-        if (
-            IDXswapPair(pair).percentFeeToExternalRecipient() > 0 &&
-            IDXswapPair(pair).externalFeeRecipient() != address(0)
-        ) {
-            uint256 percent = IDXswapPair(pair).percentFeeToExternalRecipient();
-            uint256 feeToExternalRecipient = amount.mul(percent) / 10000;
+        address _externalFeeRecipient = IDXswapPair(pair).externalFeeRecipient();
+        uint32 _percentFeeToExternalRecipient = IDXswapPair(pair).percentFeeToExternalRecipient();
+
+        if (_percentFeeToExternalRecipient > 0 && _externalFeeRecipient != address(0)) {
+            uint256 feeToExternalRecipient = amount.mul(_percentFeeToExternalRecipient) / 10000;
             uint256 feeToEthReceiver = amount.sub(feeToExternalRecipient);
             if (token == WETH) {
                 IWETH(WETH).withdraw(amount);
-                TransferHelper.safeTransferETH(IDXswapPair(pair).externalFeeRecipient(), feeToExternalRecipient);
+                TransferHelper.safeTransferETH(_externalFeeRecipient, feeToExternalRecipient);
                 TransferHelper.safeTransferETH(ethReceiver, feeToEthReceiver);
             } else {
-                TransferHelper.safeTransfer(token, IDXswapPair(pair).externalFeeRecipient(), feeToExternalRecipient);
+                TransferHelper.safeTransfer(token, _externalFeeRecipient, feeToExternalRecipient);
                 TransferHelper.safeTransfer(token, fallbackReceiver, feeToEthReceiver);
             }
         } else {
@@ -178,6 +180,7 @@ contract DXswapFeeReceiver {
         }
     }
 
+    // called by the owner to set maximum swap price impact allowed for single token-weth swap
     function setMaxSwapPriceImpact(uint32 _maxSwapPriceImpact) external {
         require(msg.sender == owner, 'DXswapFeeReceiver: CALLER_NOT_OWNER');
         require(_maxSwapPriceImpact > 0 && _maxSwapPriceImpact < 10000, 'DXswapFeeReceiver: FORBIDDEN_PRICE_IMPACT');
