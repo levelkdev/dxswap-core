@@ -1199,4 +1199,183 @@ describe('DXswapFeeReceiver', () => {
         .to.eq(externalFeeRecipientBalanceBeforeTake)
     })
 
+  // Where tokenA-tokenB, tokenC-tokenD and tokenC-WETH pairs exist
+  it(
+    'should receive tokenA,B,D and WETH from tokenC from tokenA-tonkenB and tokenC-tokenD pairs',
+    async () => {
+      const tokenAmount = expandTo18Decimals(100);
+      const amountIn = expandTo18Decimals(50);
+
+      // Set up tokenA-tokenB
+      const tokenA = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)], overrides)
+      const tokenB = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)], overrides)
+
+      await factory.createPair(tokenA.address, tokenB.address);
+      const tokenATokenBPair = new Contract(
+        await factory.getPair(
+          (tokenA.address < tokenB.address) ? tokenA.address : tokenB.address,
+          (tokenA.address < tokenB.address) ? tokenB.address : tokenA.address
+        ), JSON.stringify(DXswapPair.abi), provider
+      ).connect(wallet)
+
+      await tokenA.transfer(tokenATokenBPair.address, tokenAmount)
+      await tokenB.transfer(tokenATokenBPair.address, tokenAmount)
+      await tokenATokenBPair.mint(wallet.address, overrides)
+
+      let amountOut = await getAmountOut(tokenATokenBPair, tokenA.address, amountIn);
+      await tokenA.transfer(tokenATokenBPair.address, amountIn)
+      await tokenATokenBPair.swap(
+        (tokenA.address < tokenB.address) ? 0 : amountOut,
+        (tokenA.address < tokenB.address) ? amountOut : 0,
+        wallet.address, '0x', overrides
+      )
+
+      amountOut = await getAmountOut(tokenATokenBPair, tokenB.address, amountIn);
+      await tokenB.transfer(tokenATokenBPair.address, amountIn)
+      await tokenATokenBPair.swap(
+        (tokenA.address < tokenB.address) ? amountOut : 0,
+        (tokenA.address < tokenB.address) ? 0 : amountOut,
+        wallet.address, '0x', overrides
+      )
+
+      let protocolFeeToReceive = await calcProtocolFee(tokenATokenBPair);
+
+      await tokenA.transfer(tokenATokenBPair.address, expandTo18Decimals(10))
+      await tokenB.transfer(tokenATokenBPair.address, expandTo18Decimals(10))
+      await tokenATokenBPair.mint(wallet.address, overrides)
+
+      const protocolFeeLPTokenAtokenBPair = await tokenATokenBPair.balanceOf(feeReceiver.address);
+      expect(protocolFeeLPTokenAtokenBPair.div(ROUND_EXCEPTION))
+        .to.be.eq(protocolFeeToReceive.div(ROUND_EXCEPTION))
+
+      // Set up tokenC-tokenD pair
+      const tokenC = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)], overrides)
+      const tokenD = await deployContract(wallet, ERC20, [expandTo18Decimals(10000)], overrides)
+
+      await factory.createPair(tokenC.address, tokenD.address);
+      const tokenCTokenDPair = new Contract(
+        await factory.getPair(
+          (tokenC.address < tokenD.address) ? tokenC.address : tokenD.address,
+          (tokenC.address < tokenD.address) ? tokenD.address : tokenC.address
+        ), JSON.stringify(DXswapPair.abi), provider
+      ).connect(wallet)
+
+
+      await tokenC.transfer(tokenCTokenDPair.address, tokenAmount)
+      await tokenD.transfer(tokenCTokenDPair.address, tokenAmount)
+      await tokenCTokenDPair.mint(wallet.address, overrides)
+
+      // Set up tokenC-WETH pair
+      await factory.createPair(tokenC.address, WETH.address);
+      const tokenCWETHPair = new Contract(
+        await factory.getPair(
+          (tokenC.address < WETH.address) ? tokenC.address : WETH.address,
+          (tokenC.address < WETH.address) ? WETH.address : tokenC.address
+        ), JSON.stringify(DXswapPair.abi), provider
+      ).connect(wallet)
+      await tokenC.transfer(tokenCWETHPair.address, tokenAmount)
+      await WETH.transfer(tokenCWETHPair.address, tokenAmount)
+      await tokenCWETHPair.mint(wallet.address, overrides)
+
+      // swap
+      amountOut = await getAmountOut(tokenCTokenDPair, tokenC.address, amountIn);
+      await tokenC.transfer(tokenCTokenDPair.address, amountIn)
+      await tokenCTokenDPair.swap(
+        (tokenC.address < tokenD.address) ? 0 : amountOut,
+        (tokenC.address < tokenD.address) ? amountOut : 0,
+        wallet.address, '0x', overrides
+      )
+
+      amountOut = await getAmountOut(tokenCTokenDPair, tokenD.address, amountIn);
+      await tokenD.transfer(tokenCTokenDPair.address, amountIn)
+      await tokenCTokenDPair.swap(
+        (tokenC.address < tokenD.address) ? amountOut : 0,
+        (tokenC.address < tokenD.address) ? 0 : amountOut,
+        wallet.address, '0x', overrides
+      )
+
+      protocolFeeToReceive = await calcProtocolFee(tokenCTokenDPair);
+
+      await tokenC.transfer(tokenCTokenDPair.address, expandTo18Decimals(10))
+      await tokenD.transfer(tokenCTokenDPair.address, expandTo18Decimals(10))
+      await tokenCTokenDPair.mint(wallet.address, overrides)
+
+      const protocolFeeLPTokenCtokenDPair = await tokenCTokenDPair.balanceOf(feeReceiver.address);
+      expect(protocolFeeLPTokenCtokenDPair.div(ROUND_EXCEPTION))
+        .to.be.eq(protocolFeeToReceive.div(ROUND_EXCEPTION))
+
+      const tokenAFromProtocolFee = protocolFeeLPTokenAtokenBPair
+        .mul(await tokenA.balanceOf(tokenATokenBPair.address)).div(await tokenATokenBPair.totalSupply());
+      const tokenBFromProtocolFee = protocolFeeLPTokenAtokenBPair
+        .mul(await tokenB.balanceOf(tokenATokenBPair.address)).div(await tokenATokenBPair.totalSupply());
+      const tokenCFromProtocolFee = protocolFeeLPTokenCtokenDPair
+        .mul(await tokenC.balanceOf(tokenCTokenDPair.address)).div(await tokenCTokenDPair.totalSupply());
+      const tokenDFromProtocolFee = protocolFeeLPTokenCtokenDPair
+        .mul(await tokenD.balanceOf(tokenCTokenDPair.address)).div(await tokenCTokenDPair.totalSupply());
+
+
+      const wethFromTokenCFromProtocolFee = await getAmountOut(tokenCWETHPair, tokenC.address, tokenCFromProtocolFee);
+      const protocolFeeReceiverBalance = await provider.getBalance(protocolFeeReceiver.address)
+
+      await expect(feeReceiver.connect(wallet).takeProtocolFee([tokenATokenBPair.address, tokenCTokenDPair.address], overrides)
+      ).to.emit(feeReceiver, 'TakeProtocolFee').withArgs(wallet.address, protocolFeeReceiver.address, 2)
+
+      expect(await tokenA.balanceOf(feeReceiver.address)).to.eq(0)
+      expect(await tokenB.balanceOf(feeReceiver.address)).to.eq(0)
+      expect(await tokenC.balanceOf(feeReceiver.address)).to.eq(0)
+      expect(await tokenD.balanceOf(feeReceiver.address)).to.eq(0)
+      expect(await WETH.balanceOf(feeReceiver.address)).to.eq(0)
+      expect(await pair.balanceOf(feeReceiver.address)).to.eq(0)
+      expect(await provider.getBalance(feeReceiver.address)).to.eq(0)
+
+      expect((await tokenA.balanceOf(dxdao.address)))
+        .to.be.eq(tokenAFromProtocolFee)
+      expect((await tokenB.balanceOf(dxdao.address)))
+        .to.be.eq(tokenBFromProtocolFee)
+      expect((await tokenD.balanceOf(dxdao.address)))
+        .to.be.eq(tokenDFromProtocolFee)
+      expect((await tokenC.balanceOf(dxdao.address)))
+        .to.eq(0)
+      expect((await provider.getBalance(protocolFeeReceiver.address)))
+        .to.be.eq(protocolFeeReceiverBalance.add(wethFromTokenCFromProtocolFee))
+    })
+
+  // Where token0-token1 and token1-WETH pairs exist
+  it(
+    'should emit TakeProtocolFee event',
+    async () => {
+      const tokenAmount = expandTo18Decimals(100);
+      const wethAmount = expandTo18Decimals(100);
+      const amountIn = expandTo18Decimals(10);
+
+      await token0.transfer(pair.address, tokenAmount)
+      await token1.transfer(pair.address, tokenAmount)
+      await pair.mint(wallet.address, overrides)
+
+      await token1.transfer(wethToken1Pair.address, tokenAmount)
+      await WETH.transfer(wethToken1Pair.address, wethAmount)
+      await wethToken1Pair.mint(wallet.address, overrides)
+
+      let amountOut = await getAmountOut(pair, token0.address, amountIn);
+      await token0.transfer(pair.address, amountIn)
+      await pair.swap(0, amountOut, wallet.address, '0x', overrides)
+
+      amountOut = await getAmountOut(wethToken1Pair, token1.address, amountIn);
+      await token1.transfer(wethToken1Pair.address, amountIn)
+      await wethToken1Pair.swap(0, amountOut, wallet.address, '0x', overrides)
+
+      await token0.transfer(pair.address, expandTo18Decimals(10))
+      await token1.transfer(pair.address, expandTo18Decimals(10))
+      await pair.mint(wallet.address, overrides)
+
+      await token1.transfer(wethToken1Pair.address, expandTo18Decimals(10))
+      await WETH.transfer(wethToken1Pair.address, expandTo18Decimals(10))
+      await wethToken1Pair.mint(wallet.address, overrides)
+
+      await expect(feeReceiver.connect(wallet).takeProtocolFee([pair.address, wethToken1Pair.address], overrides)
+      ).to.emit(feeReceiver, 'TakeProtocolFee').withArgs(wallet.address, protocolFeeReceiver.address, 2)
+
+    })
+
+
 })
