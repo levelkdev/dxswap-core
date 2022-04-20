@@ -16,6 +16,8 @@ contract DXswapFeeReceiver {
     address public fallbackReceiver;
     uint32 public maxSwapPriceImpact = 100; // uses default 1% as max allowed price impact for takeProtocolFee swap
 
+    event TakeProtocolFee(address indexed sender, address indexed to, uint256 NumberOfPairs);
+
     constructor(
         address _owner,
         address _factory,
@@ -178,6 +180,7 @@ contract DXswapFeeReceiver {
             if (amount0 > 0) _takeETHorToken(address(pairs[i]), token0, amount0);
             if (amount1 > 0) _takeETHorToken(address(pairs[i]), token1, amount1);
         }
+        emit TakeProtocolFee(msg.sender, ethReceiver, pairs.length);
     }
 
     // called by the owner to set maximum swap price impact allowed for single token-weth swap
