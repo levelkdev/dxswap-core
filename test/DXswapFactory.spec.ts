@@ -31,7 +31,7 @@ describe('DXswapFactory', () => {
     const fixture = await loadFixture(factoryFixture)
     factory = fixture.factory
     feeSetter = fixture.feeSetter
-    
+
     // Set feeToSetter to wallet.address to test the factory methdos from an ETH account
     await feeSetter.setFeeTo(AddressZero);
     await feeSetter.setFeeToSetter(wallet.address);
@@ -45,7 +45,7 @@ describe('DXswapFactory', () => {
   })
 
   async function createPair(tokens: [string, string]) {
-    const bytecode = "0x"+DXswapPair.bytecode
+    const bytecode = "0x" + DXswapPair.bytecode
     const create2Address = getCreate2Address(factory.address, tokens, bytecode)
     await expect(factory.createPair(...tokens))
       .to.emit(factory, 'PairCreated')

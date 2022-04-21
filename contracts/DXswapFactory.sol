@@ -12,13 +12,13 @@ contract DXswapFactory is IDXswapFactory {
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
 
-    event PairCreated(address indexed token0, address indexed token1, address pair, uint);
+    event PairCreated(address indexed token0, address indexed token1, address pair, uint256);
 
     constructor(address _feeToSetter) public {
         feeToSetter = _feeToSetter;
     }
 
-    function allPairsLength() external view returns (uint) {
+    function allPairsLength() external view returns (uint256) {
         return allPairs.length;
     }
 
@@ -48,13 +48,13 @@ contract DXswapFactory is IDXswapFactory {
         require(msg.sender == feeToSetter, 'DXswapFactory: FORBIDDEN');
         feeToSetter = _feeToSetter;
     }
-    
+
     function setProtocolFee(uint8 _protocolFeeDenominator) external {
         require(msg.sender == feeToSetter, 'DXswapFactory: FORBIDDEN');
         require(_protocolFeeDenominator > 0, 'DXswapFactory: FORBIDDEN_FEE');
         protocolFeeDenominator = _protocolFeeDenominator;
     }
-    
+
     function setSwapFee(address _pair, uint32 _swapFee) external {
         require(msg.sender == feeToSetter, 'DXswapFactory: FORBIDDEN');
         IDXswapPair(_pair).setSwapFee(_swapFee);

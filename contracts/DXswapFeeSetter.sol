@@ -6,7 +6,7 @@ contract DXswapFeeSetter {
     address public owner;
     mapping(address => address) public pairOwners;
     IDXswapFactory public factory;
-  
+
     constructor(address _owner, address _factory) public {
         owner = _owner;
         factory = IDXswapFactory(_factory);
@@ -16,7 +16,7 @@ contract DXswapFeeSetter {
         require(msg.sender == owner, 'DXswapFeeSetter: FORBIDDEN');
         owner = newOwner;
     }
-    
+
     function transferPairOwnership(address pair, address newOwner) external {
         require(msg.sender == owner, 'DXswapFeeSetter: FORBIDDEN');
         pairOwners[pair] = newOwner;
@@ -31,12 +31,12 @@ contract DXswapFeeSetter {
         require(msg.sender == owner, 'DXswapFeeSetter: FORBIDDEN');
         factory.setFeeToSetter(feeToSetter);
     }
-    
+
     function setProtocolFee(uint8 protocolFeeDenominator) external {
         require(msg.sender == owner, 'DXswapFeeSetter: FORBIDDEN');
         factory.setProtocolFee(protocolFeeDenominator);
     }
-    
+
     function setSwapFee(address pair, uint32 swapFee) external {
         require((msg.sender == owner) || ((msg.sender == pairOwners[pair])), 'DXswapFeeSetter: FORBIDDEN');
         factory.setSwapFee(pair, swapFee);
