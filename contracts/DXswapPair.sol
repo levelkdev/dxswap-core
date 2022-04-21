@@ -28,8 +28,8 @@ contract DXswapPair is IDXswapPair, DXswapERC20 {
     uint256 public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
     uint32 public swapFee = 25; // uses 0.25% fee as default
 
-    address public externalFeeRecipient; // if needed set address of external project which can get some % of total earned protocol fee
-    uint32 public percentFeeToExternalRecipient = 0; // % of all protocol fee to external project (100 means 1%)
+    address public externalFeeRecipient; // if needed set address of external project which can get % of total earned protocol fee
+    uint32 public percentFeeToExternalRecipient = 0; // % of total protocol fee to external project (100 means 1%), range <0, 50>
 
     uint256 private unlocked = 1;
     modifier lock() {

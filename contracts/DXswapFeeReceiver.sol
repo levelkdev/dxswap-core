@@ -75,7 +75,7 @@ contract DXswapFeeReceiver {
                         hex'ff',
                         factory,
                         keccak256(abi.encodePacked(token0, token1)),
-                        hex'0a6294cc1920e3a117b957dadd1262548bec1c7b7f22ddfcd3311623d88004b3' // INIT_CODE_PAIR_HASH
+                        hex'61711fee40f324739edb0f7fc7017a47d328ee0b69e93d9a4d1e2215e7d0a2d4' // INIT_CODE_PAIR_HASH
                     )
                 )
             )
@@ -100,8 +100,6 @@ contract DXswapFeeReceiver {
         (uint256 amount0Out, uint256 amount1Out) = fromToken < WETH ? (uint256(0), amountOut) : (amountOut, uint256(0));
 
         pairToUse.swap(amount0Out, amount1Out, address(this), new bytes(0));
-
-        return amountOut;
     }
 
     // Helper function to know if token-WETH pool exists and has enough liquidity
@@ -135,14 +133,14 @@ contract DXswapFeeReceiver {
 
         if (_percentFeeToExternalRecipient > 0 && _externalFeeRecipient != address(0)) {
             uint256 feeToExternalRecipient = amount.mul(_percentFeeToExternalRecipient) / 10000;
-            uint256 feeToEthReceiver = amount.sub(feeToExternalRecipient);
+            uint256 feeToAvatarDAO = amount.sub(feeToExternalRecipient);
             if (token == WETH) {
                 IWETH(WETH).withdraw(amount);
                 TransferHelper.safeTransferETH(_externalFeeRecipient, feeToExternalRecipient);
-                TransferHelper.safeTransferETH(ethReceiver, feeToEthReceiver);
+                TransferHelper.safeTransferETH(ethReceiver, feeToAvatarDAO);
             } else {
                 TransferHelper.safeTransfer(token, _externalFeeRecipient, feeToExternalRecipient);
-                TransferHelper.safeTransfer(token, fallbackReceiver, feeToEthReceiver);
+                TransferHelper.safeTransfer(token, fallbackReceiver, feeToAvatarDAO);
             }
         } else {
             if (token == WETH) {
@@ -155,7 +153,7 @@ contract DXswapFeeReceiver {
     }
 
     // Convert tokens into ETH if possible, if not just transfer the token
-    function _takeETHorToken(
+    function _takeTokenOrETH(
         address pair,
         address token,
         uint256 amount
@@ -177,8 +175,8 @@ contract DXswapFeeReceiver {
             address token1 = pairs[i].token1();
             pairs[i].transfer(address(pairs[i]), pairs[i].balanceOf(address(this)));
             (uint256 amount0, uint256 amount1) = pairs[i].burn(address(this));
-            if (amount0 > 0) _takeETHorToken(address(pairs[i]), token0, amount0);
-            if (amount1 > 0) _takeETHorToken(address(pairs[i]), token1, amount1);
+            if (amount0 > 0) _takeTokenOrETH(address(pairs[i]), token0, amount0);
+            if (amount1 > 0) _takeTokenOrETH(address(pairs[i]), token1, amount1);
         }
         emit TakeProtocolFee(msg.sender, ethReceiver, pairs.length);
     }
