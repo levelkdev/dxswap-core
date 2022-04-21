@@ -59,4 +59,14 @@ contract DXswapFactory is IDXswapFactory {
         require(msg.sender == feeToSetter, 'DXswapFactory: FORBIDDEN');
         IDXswapPair(_pair).setSwapFee(_swapFee);
     }
+
+    function setExternalFeeRecipient(address _pair, address _externalFeeRecipient) external {
+        require(msg.sender == feeToSetter, 'DXswapFactory: FORBIDDEN');
+        IDXswapPair(_pair).setExternalFeeRecipient(_externalFeeRecipient);
+    }
+
+    function setPercentFeeToExternalRecipient(address _pair, uint32 _percentFeeToExternalRecipient) external {
+        require(msg.sender == feeToSetter, 'DXswapFactory: FORBIDDEN');
+        IDXswapPair(_pair).setPercentFeeToExternalRecipient(_percentFeeToExternalRecipient);
+    }
 }

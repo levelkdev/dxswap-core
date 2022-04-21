@@ -41,4 +41,14 @@ contract DXswapFeeSetter {
         require((msg.sender == owner) || ((msg.sender == pairOwners[pair])), 'DXswapFeeSetter: FORBIDDEN');
         factory.setSwapFee(pair, swapFee);
     }
+
+    function setExternalFeeRecipient(address pair, address externalFeeRecipient) external {
+        require((msg.sender == owner) || ((msg.sender == pairOwners[pair])), 'DXswapFeeSetter: FORBIDDEN');
+        factory.setExternalFeeRecipient(pair, externalFeeRecipient);
+    }
+
+    function setPercentFeeToExternalRecipient(address pair, uint32 swapFee) external {
+        require((msg.sender == owner) || ((msg.sender == pairOwners[pair])), 'DXswapFeeSetter: FORBIDDEN');
+        factory.setPercentFeeToExternalRecipient(pair, swapFee);
+    }
 }

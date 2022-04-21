@@ -79,6 +79,10 @@ interface IDXswapPair {
 
     function swapFee() external view returns (uint32);
 
+    function externalFeeRecipient() external view returns (address);
+
+    function percentFeeToExternalRecipient() external view returns (uint32);
+
     function mint(address to) external returns (uint256 liquidity);
 
     function burn(address to) external returns (uint256 amount0, uint256 amount1);
@@ -97,4 +101,8 @@ interface IDXswapPair {
     function initialize(address, address) external;
 
     function setSwapFee(uint32) external;
+
+    function setExternalFeeRecipient(address) external;
+
+    function setPercentFeeToExternalRecipient(uint32) external;
 }

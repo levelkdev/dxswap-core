@@ -1,4 +1,4 @@
-import { Contract, Wallet } from 'ethers'
+import { Contract, ethers, Wallet } from 'ethers'
 import { Web3Provider } from 'ethers/providers'
 import { defaultAbiCoder } from 'ethers/utils'
 import { deployContract } from 'ethereum-waffle'
@@ -47,7 +47,8 @@ interface PairFixture extends FactoryFixture {
   token0: Contract
   token1: Contract
   pair: Contract
-  wethPair: Contract
+  wethToken0Pair: Contract
+  wethToken1Pair: Contract
 }
 
 export async function pairFixture(provider: Web3Provider, [dxdao, wallet, ethReceiver]: Wallet[]): Promise<PairFixture> {
@@ -63,11 +64,12 @@ export async function pairFixture(provider: Web3Provider, [dxdao, wallet, ethRec
     ethReceiver.address,
     dxdao.address,
     WETH.address,
-    [token0.address, token1.address],
-    [token1.address, WETH.address],
-    [15, 15],
+    [token0.address, token0.address, token1.address],
+    [token1.address, WETH.address, WETH.address],
+    [15, 15, 15],
   ], overrides
   )
+
   await dxdao.sendTransaction({ to: dxSwapDeployer.address, gasPrice: 0, value: 1 })
   const deployTx = await dxSwapDeployer.deploy()
   const deployTxReceipt = await provider.getTransactionReceipt(deployTx.hash);
@@ -84,10 +86,14 @@ export async function pairFixture(provider: Web3Provider, [dxdao, wallet, ethRec
     await factory.getPair(token0.address, token1.address),
     JSON.stringify(DXswapPair.abi), provider
   ).connect(dxdao)
-  const wethPair = new Contract(
+  const wethToken0Pair = new Contract(
+    await factory.getPair(token0.address, WETH.address),
+    JSON.stringify(DXswapPair.abi), provider
+  ).connect(dxdao)
+  const wethToken1Pair = new Contract(
     await factory.getPair(token1.address, WETH.address),
     JSON.stringify(DXswapPair.abi), provider
   ).connect(dxdao)
 
-  return { factory, feeSetter, feeReceiver, WETH, token0, token1, pair, wethPair }
+  return { factory, feeSetter, feeReceiver, WETH, token0, token1, pair, wethToken0Pair, wethToken1Pair }
 }

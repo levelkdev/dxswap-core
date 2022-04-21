@@ -23,7 +23,11 @@ interface IDXswapFactory {
 
     function setFeeToSetter(address) external;
 
-    function setProtocolFee(uint8 _protocolFee) external;
+    function setProtocolFee(uint8 protocolFee) external;
 
     function setSwapFee(address pair, uint32 swapFee) external;
+
+    function setExternalFeeRecipient(address pair, address externalFeeRecipient) external;
+
+    function setPercentFeeToExternalRecipient(address pair, uint32 percentFeeToExternalRecipient) external;
 }

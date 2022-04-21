@@ -28,6 +28,9 @@ contract DXswapPair is IDXswapPair, DXswapERC20 {
     uint256 public kLast; // reserve0 * reserve1, as of immediately after the most recent liquidity event
     uint32 public swapFee = 25; // uses 0.25% fee as default
 
+    address public externalFeeRecipient; // if needed set address of external project which can get % of total earned protocol fee
+    uint32 public percentFeeToExternalRecipient = 0; // % of total protocol fee to external project (100 means 1%), range <0, 50>
+
     uint256 private unlocked = 1;
     modifier lock() {
         require(unlocked == 1, 'DXswapPair: LOCKED');
@@ -87,6 +90,22 @@ contract DXswapPair is IDXswapPair, DXswapERC20 {
         require(msg.sender == factory, 'DXswapPair: FORBIDDEN'); // sufficient check
         require(_swapFee <= 1000, 'DXswapPair: FORBIDDEN_FEE'); // fee percentage check
         swapFee = _swapFee;
+    }
+
+    // called by the factory to set external recipient address
+    function setExternalFeeRecipient(address _externalFeeRecipient) external {
+        require(msg.sender == factory, 'DXswapPair: FORBIDDEN'); // sufficient check
+        externalFeeRecipient = _externalFeeRecipient;
+    }
+
+    // called by the factory to set % of total protocol fee which should be sent to project address
+    function setPercentFeeToExternalRecipient(uint32 _percentFeeToExternalRecipient) external {
+        require(msg.sender == factory, 'DXswapPair: FORBIDDEN'); // sufficient check
+        require(
+            _percentFeeToExternalRecipient >= 0 && _percentFeeToExternalRecipient <= 5000,
+            'DXswapPair: FORBIDDEN_FEE_SPLIT'
+        ); // sufficient check
+        percentFeeToExternalRecipient = _percentFeeToExternalRecipient;
     }
 
     // update reserves and, on the first call per block, price accumulators

@@ -18,11 +18,11 @@ describe('DXswapDeployer', () => {
   const provider = new MockProvider({
     hardfork: 'istanbul',
     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-    gasLimit: 12000000
+    gasLimit: 15000000
   })
   const [dxdao, tokenOwner, protocolFeeReceiver, other] = provider.getWallets()
   const overrides = {
-    gasLimit: 12000000
+    gasLimit: 15000000
   }
 
   let dxSwapDeployer: Contract

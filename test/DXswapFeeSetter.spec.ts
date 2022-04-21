@@ -21,7 +21,7 @@ describe('DXswapFeeSetter', () => {
   const provider = new MockProvider({
     hardfork: 'istanbul',
     mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-    gasLimit: 9999999
+    gasLimit: 15000000
   })
   const [dxdao, pairOwner, protocolFeeReceiver, other] = provider.getWallets()
   const loadFixture = createFixtureLoader(provider, [dxdao, other, protocolFeeReceiver])
