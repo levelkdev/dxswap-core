@@ -2,11 +2,12 @@ pragma solidity =0.5.16;
 
 import './interfaces/IDXswapFactory.sol';
 import './interfaces/IDXswapPair.sol';
+import './interfaces/IDXswapFeeReceiver.sol';
 import './interfaces/IWETH.sol';
 import './libraries/TransferHelper.sol';
 import './libraries/SafeMath.sol';
 
-contract DXswapFeeReceiver {
+contract DXswapFeeReceiver is IDXswapFeeReceiver {
     using SafeMath for uint256;
 
     address public owner;
@@ -75,7 +76,7 @@ contract DXswapFeeReceiver {
                         hex'ff',
                         factory,
                         keccak256(abi.encodePacked(token0, token1)),
-                        hex'61711fee40f324739edb0f7fc7017a47d328ee0b69e93d9a4d1e2215e7d0a2d4' // INIT_CODE_PAIR_HASH
+                        hex'c7f3af50111817ebea773f8f709c40b5d6fb937cd35cee835e6a797e7694903a' // INIT_CODE_PAIR_HASH
                     )
                 )
             )
@@ -181,7 +182,7 @@ contract DXswapFeeReceiver {
         emit TakeProtocolFee(msg.sender, ethReceiver, pairs.length);
     }
 
-    // called by the owner to set maximum swap price impact allowed for single token-weth swap
+    // called by the owner to set maximum swap price impact allowed for single token-weth swap (within 0-100% range)
     function setMaxSwapPriceImpact(uint32 _maxSwapPriceImpact) external {
         require(msg.sender == owner, 'DXswapFeeReceiver: CALLER_NOT_OWNER');
         require(_maxSwapPriceImpact > 0 && _maxSwapPriceImpact < 10000, 'DXswapFeeReceiver: FORBIDDEN_PRICE_IMPACT');

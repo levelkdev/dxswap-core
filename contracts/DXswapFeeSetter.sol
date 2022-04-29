@@ -1,6 +1,8 @@
 pragma solidity =0.5.16;
 
 import './interfaces/IDXswapFactory.sol';
+import './interfaces/IDXswapFeeReceiver.sol';
+import './interfaces/IDXswapPair.sol';
 
 contract DXswapFeeSetter {
     address public owner;
@@ -47,8 +49,20 @@ contract DXswapFeeSetter {
         factory.setExternalFeeRecipient(pair, externalFeeRecipient);
     }
 
-    function setPercentFeeToExternalRecipient(address pair, uint32 swapFee) external {
+    function setPercentFeeToExternalRecipient(
+        address pair,
+        address feeReceiver,
+        uint32 percentFeeToExternalRecipient
+    ) external {
         require((msg.sender == owner) || ((msg.sender == pairOwners[pair])), 'DXswapFeeSetter: FORBIDDEN');
-        factory.setPercentFeeToExternalRecipient(pair, swapFee);
+        uint256 feeReceiverBalance = IDXswapPair(pair).balanceOf(feeReceiver);
+        if (feeReceiverBalance > 0) {
+            // withdraw accumulated fees before updating the split percentage
+            IDXswapPair[] memory pairs = new IDXswapPair[](1);
+            pairs[0] = IDXswapPair(pair);
+            IDXswapFeeReceiver(feeReceiver).takeProtocolFee(pairs);
+        }
+        // update the split percentage for specific pair
+        factory.setPercentFeeToExternalRecipient(pair, percentFeeToExternalRecipient);
     }
 }
