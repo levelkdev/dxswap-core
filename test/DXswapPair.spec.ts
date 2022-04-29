@@ -31,6 +31,7 @@ describe('DXswapPair', () => {
   let token1: Contract
   let pair: Contract
   let feeSetter: Contract
+  let feeReceiver: Contract
 
   beforeEach(async () => {
     const fixture = await loadFixture(pairFixture)
@@ -39,6 +40,7 @@ describe('DXswapPair', () => {
     token1 = fixture.token1
     pair = fixture.pair
     feeSetter = fixture.feeSetter
+    feeReceiver = fixture.feeReceiver
     await feeSetter.setFeeTo(AddressZero);
   })
 
@@ -398,13 +400,13 @@ describe('DXswapPair', () => {
   it('fail on trying to set percent fee to external recipient higher than 50%', async () => {
     expect(await pair.percentFeeToExternalRecipient())
       .to.eq(0)
-    await feeSetter.setPercentFeeToExternalRecipient(pair.address, 5000)
+    await feeSetter.setPercentFeeToExternalRecipient(pair.address, feeReceiver.address, 5000)
     expect(await pair.percentFeeToExternalRecipient())
       .to.eq(5000)
-    await feeSetter.setPercentFeeToExternalRecipient(pair.address, 100)
+    await feeSetter.setPercentFeeToExternalRecipient(pair.address, feeReceiver.address, 100)
     expect(await pair.percentFeeToExternalRecipient())
       .to.eq(100)
-    await expect(feeSetter.setPercentFeeToExternalRecipient(pair.address, 5001)).to.be.revertedWith(
+    await expect(feeSetter.setPercentFeeToExternalRecipient(pair.address, feeReceiver.address, 5001)).to.be.revertedWith(
       'DXswapPair: FORBIDDEN_FEE_SPLIT'
     )
   })
