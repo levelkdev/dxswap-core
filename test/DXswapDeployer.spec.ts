@@ -29,10 +29,9 @@ describe('DXswapDeployer', () => {
   let token0: Contract
   let token1: Contract
   let token2: Contract
-  const pairBytecode = "0x" + DXswapPair.bytecode
+  const pairBytecode = '0x' + DXswapPair.bytecode
 
   it('Execute migration with intial pairs', async () => {
-
     // Deploy tokens 4 testing
     token0 = await deployContract(tokenOwner, ERC20, [expandTo18Decimals(20000)], overrides)
     token1 = await deployContract(tokenOwner, ERC20, [expandTo18Decimals(20000)], overrides)
@@ -40,86 +39,87 @@ describe('DXswapDeployer', () => {
     const weth = await deployContract(tokenOwner, WETH9)
     // Deploy DXswapDeployer
     dxSwapDeployer = await deployContract(
-      dxdao, DXswapDeployer, [
-      protocolFeeReceiver.address,
-      dxdao.address,
-      weth.address,
-      [token0.address, token0.address, token1.address],
-      [token1.address, token2.address, token2.address],
-      [10, 20, 30],
-    ], overrides
+      dxdao,
+      DXswapDeployer,
+      [
+        protocolFeeReceiver.address,
+        dxdao.address,
+        weth.address,
+        [token0.address, token0.address, token1.address],
+        [token1.address, token2.address, token2.address],
+        [10, 20, 30]
+      ],
+      overrides
     )
     expect(await dxSwapDeployer.state()).to.eq(0)
 
     // Dont allow other address to approve deployment by sending eth
-    await expect(other.sendTransaction({ to: dxSwapDeployer.address, gasPrice: 0, value: expandTo18Decimals(10000) }))
-      .to.be.revertedWith('DXswapDeployer: CALLER_NOT_FEE_TO_SETTER')
+    await expect(
+      other.sendTransaction({ to: dxSwapDeployer.address, gasPrice: 0, value: expandTo18Decimals(10000) })
+    ).to.be.revertedWith('DXswapDeployer: CALLER_NOT_FEE_TO_SETTER')
 
     // Dont allow deploy before being approved by sending ETH
-    await expect(dxSwapDeployer.connect(other).deploy())
-      .to.be.revertedWith('DXswapDeployer: WRONG_DEPLOYER_STATE')
+    await expect(dxSwapDeployer.connect(other).deploy()).to.be.revertedWith('DXswapDeployer: WRONG_DEPLOYER_STATE')
 
     // Send transaction with value from dxdao to approve deployment
     await dxdao.sendTransaction({ to: dxSwapDeployer.address, gasPrice: 0, value: expandTo18Decimals(10000) })
     expect(await dxSwapDeployer.state()).to.eq(1)
 
     // Dont allow sending more value
-    await expect(dxdao.sendTransaction({ to: dxSwapDeployer.address, gasPrice: 0, value: expandTo18Decimals(10000) }))
-      .to.be.revertedWith('DXswapDeployer: WRONG_DEPLOYER_STATE')
-    await expect(other.sendTransaction({ to: dxSwapDeployer.address, gasPrice: 0, value: expandTo18Decimals(10000) }))
-      .to.be.revertedWith('DXswapDeployer: WRONG_DEPLOYER_STATE')
+    await expect(
+      dxdao.sendTransaction({ to: dxSwapDeployer.address, gasPrice: 0, value: expandTo18Decimals(10000) })
+    ).to.be.revertedWith('DXswapDeployer: WRONG_DEPLOYER_STATE')
+    await expect(
+      other.sendTransaction({ to: dxSwapDeployer.address, gasPrice: 0, value: expandTo18Decimals(10000) })
+    ).to.be.revertedWith('DXswapDeployer: WRONG_DEPLOYER_STATE')
 
     // Execute deployment transaction
     const deployTx = await dxSwapDeployer.connect(other).deploy()
     expect(await dxSwapDeployer.state()).to.eq(2)
-    const deployTxReceipt = await provider.getTransactionReceipt(deployTx.hash);
+    const deployTxReceipt = await provider.getTransactionReceipt(deployTx.hash)
 
     // Dont allow sending more value
-    await expect(dxdao.sendTransaction({ to: dxSwapDeployer.address, gasPrice: 0, value: expandTo18Decimals(10000) }))
-      .to.be.revertedWith('DXswapDeployer: WRONG_DEPLOYER_STATE')
-    await expect(other.sendTransaction({ to: dxSwapDeployer.address, gasPrice: 0, value: expandTo18Decimals(10000) }))
-      .to.be.revertedWith('DXswapDeployer: WRONG_DEPLOYER_STATE')
+    await expect(
+      dxdao.sendTransaction({ to: dxSwapDeployer.address, gasPrice: 0, value: expandTo18Decimals(10000) })
+    ).to.be.revertedWith('DXswapDeployer: WRONG_DEPLOYER_STATE')
+    await expect(
+      other.sendTransaction({ to: dxSwapDeployer.address, gasPrice: 0, value: expandTo18Decimals(10000) })
+    ).to.be.revertedWith('DXswapDeployer: WRONG_DEPLOYER_STATE')
 
     // Dont allow running deployment again
     await expect(dxSwapDeployer.connect(other).deploy()).to.be.revertedWith('DXswapDeployer: WRONG_DEPLOYER_STATE')
 
     // Get addresses from events
-    const pairFactoryAddress = deployTxReceipt.logs != undefined
-      ? defaultAbiCoder.decode(['address'], deployTxReceipt.logs[0].data)[0]
-      : null
-    const pair01Address = deployTxReceipt.logs != undefined
-      ? defaultAbiCoder.decode(['address'], deployTxReceipt.logs[2].data)[0]
-      : null
-    const pair02Address = deployTxReceipt.logs != undefined
-      ? defaultAbiCoder.decode(['address'], deployTxReceipt.logs[4].data)[0]
-      : null
-    const pair12Address = deployTxReceipt.logs != undefined
-      ? defaultAbiCoder.decode(['address'], deployTxReceipt.logs[6].data)[0]
-      : null
-    const feeReceiverAddress = deployTxReceipt.logs != undefined
-      ? defaultAbiCoder.decode(['address'], deployTxReceipt.logs[7].data)[0]
-      : null
-    const feeSetterAddress = deployTxReceipt.logs != undefined
-      ? defaultAbiCoder.decode(['address'], deployTxReceipt.logs[8].data)[0]
-      : null
+    const pairFactoryAddress =
+      deployTxReceipt.logs != undefined ? defaultAbiCoder.decode(['address'], deployTxReceipt.logs[0].data)[0] : null
+    const pair01Address =
+      deployTxReceipt.logs != undefined ? defaultAbiCoder.decode(['address'], deployTxReceipt.logs[2].data)[0] : null
+    const pair02Address =
+      deployTxReceipt.logs != undefined ? defaultAbiCoder.decode(['address'], deployTxReceipt.logs[4].data)[0] : null
+    const pair12Address =
+      deployTxReceipt.logs != undefined ? defaultAbiCoder.decode(['address'], deployTxReceipt.logs[6].data)[0] : null
+    const feeReceiverAddress =
+      deployTxReceipt.logs != undefined ? defaultAbiCoder.decode(['address'], deployTxReceipt.logs[7].data)[0] : null
+    const feeSetterAddress =
+      deployTxReceipt.logs != undefined ? defaultAbiCoder.decode(['address'], deployTxReceipt.logs[8].data)[0] : null
 
     // Instantiate contracts
-    const pairFactory = new Contract(pairFactoryAddress, JSON.stringify(DXswapFactory.abi), provider);
+    const pairFactory = new Contract(pairFactoryAddress, JSON.stringify(DXswapFactory.abi), provider)
     const pair01 = new Contract(
       getCreate2Address(pairFactory.address, [token0.address, token1.address], pairBytecode),
       JSON.stringify(DXswapPair.abi),
       provider
-    );
+    )
     const pair02 = new Contract(
       getCreate2Address(pairFactory.address, [token0.address, token2.address], pairBytecode),
       JSON.stringify(DXswapPair.abi),
       provider
-    );
+    )
     const pair12 = new Contract(
       getCreate2Address(pairFactory.address, [token1.address, token2.address], pairBytecode),
       JSON.stringify(DXswapPair.abi),
       provider
-    );
+    )
 
     // Conpare onchain information to offchain predicted information
     expect(await pairFactory.feeTo()).to.eq(feeReceiverAddress)
@@ -144,7 +144,5 @@ describe('DXswapDeployer', () => {
     expect(await pair12.token0()).to.eq(token2.address)
     expect(await pair12.token1()).to.eq(token1.address)
     expect(await pair12.totalSupply()).to.eq(0)
-
   })
-
 })

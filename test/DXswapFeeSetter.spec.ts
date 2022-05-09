@@ -77,17 +77,21 @@ describe('DXswapFeeSetter', () => {
 
     // If ownership of the pair is given to other address both addresses (FeeSetter owner and Pair owner) should be
     // able to change the swap fee
-    await expect(feeSetter.connect(pairOwner).setSwapFee(pair.address, 5)).to.be.revertedWith('DXswapFeeSetter: FORBIDDEN')
+    await expect(feeSetter.connect(pairOwner).setSwapFee(pair.address, 5)).to.be.revertedWith(
+      'DXswapFeeSetter: FORBIDDEN'
+    )
     await feeSetter.connect(dxdao).transferPairOwnership(pair.address, pairOwner.address)
     await feeSetter.connect(pairOwner).setSwapFee(pair.address, 3)
     expect(await pair.swapFee()).to.eq(3)
     await feeSetter.connect(dxdao).setSwapFee(pair.address, 7)
     expect(await pair.swapFee()).to.eq(7)
 
-    // If ownership of the pair is removed by setting it to zero the pair owner should not be able to change the 
+    // If ownership of the pair is removed by setting it to zero the pair owner should not be able to change the
     // fee anymore.
     await feeSetter.connect(dxdao).transferPairOwnership(pair.address, AddressZero)
-    await expect(feeSetter.connect(pairOwner).setSwapFee(pair.address, 5)).to.be.revertedWith('DXswapFeeSetter: FORBIDDEN')
+    await expect(feeSetter.connect(pairOwner).setSwapFee(pair.address, 5)).to.be.revertedWith(
+      'DXswapFeeSetter: FORBIDDEN'
+    )
 
     // If feeToSetter changes it will will fail in DXswapFactory check when trying to setSwapFee from FeeSetter.
     await feeSetter.connect(dxdao).setFeeToSetter(other.address)
@@ -96,7 +100,9 @@ describe('DXswapFeeSetter', () => {
 
   it('setFeeToSetter', async () => {
     // Should not allow to setFeeToSetter from other address taht is not owner calling feeSetter
-    await expect(feeSetter.connect(other).setFeeToSetter(other.address)).to.be.revertedWith('DXswapFeeSetter: FORBIDDEN')
+    await expect(feeSetter.connect(other).setFeeToSetter(other.address)).to.be.revertedWith(
+      'DXswapFeeSetter: FORBIDDEN'
+    )
     await feeSetter.connect(dxdao).setFeeToSetter(other.address)
     expect(await factory.feeToSetter()).to.eq(other.address)
     // If feeToSetter changes it will will fail in DXswapFactory check when trying to setFeeToSetter from FeeSetter.

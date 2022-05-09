@@ -33,19 +33,21 @@ describe('DXswapFactory', () => {
     feeSetter = fixture.feeSetter
 
     // Set feeToSetter to wallet.address to test the factory methdos from an ETH account
-    await feeSetter.setFeeTo(AddressZero);
-    await feeSetter.setFeeToSetter(wallet.address);
+    await feeSetter.setFeeTo(AddressZero)
+    await feeSetter.setFeeToSetter(wallet.address)
   })
 
   it('feeTo, feeToSetter, allPairsLength, INIT_CODE_PAIR_HASH', async () => {
     expect(await factory.feeTo()).to.eq(AddressZero)
     expect(await factory.feeToSetter()).to.eq(wallet.address)
     expect(await factory.allPairsLength()).to.eq(0)
-    expect(await factory.INIT_CODE_PAIR_HASH()).to.eq('0xd306a548755b9295ee49cc729e13ca4a45e00199bbd890fa146da43a50571776')
+    expect(await factory.INIT_CODE_PAIR_HASH()).to.eq(
+      '0xd306a548755b9295ee49cc729e13ca4a45e00199bbd890fa146da43a50571776'
+    )
   })
 
   async function createPair(tokens: [string, string]) {
-    const bytecode = "0x" + DXswapPair.bytecode
+    const bytecode = '0x' + DXswapPair.bytecode
     const create2Address = getCreate2Address(factory.address, tokens, bytecode)
     await expect(factory.createPair(...tokens))
       .to.emit(factory, 'PairCreated')
