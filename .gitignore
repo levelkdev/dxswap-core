@@ -2,3 +2,14 @@ node_modules/
 contracts/.flattened
 .openzeppelin/.session
 .env
+build
+env/*
+coverage/*
+coverage.json
+cache/
+yarn.lock
+coverage/
+coverage.json
+typechain
+deployments/hardhat
+deployments/localhost
