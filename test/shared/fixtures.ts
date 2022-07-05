@@ -3,6 +3,8 @@ import { DXswapFactory, DXswapFactory__factory, DXswapPair, DXswapPair__factory,
 import { defaultAbiCoder } from 'ethers/lib/utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { JsonRpcProvider } from '@ethersproject/providers';
+import { DXswapFeeSplitter } from '../../typechain/DXswapFeeSplitter';
+import { DXswapFeeSplitter__factory } from '../../typechain/factories/DXswapFeeSplitter__factory';
 
 
 const overrides = {
@@ -14,6 +16,7 @@ interface FactoryFixture {
   dxswapFactory: DXswapFactory
   feeSetter: DXswapFeeSetter
   feeReceiver: DXswapFeeReceiver
+  feeSplitter: DXswapFeeSplitter
   WETH: WETH9
 }
 
@@ -41,7 +44,10 @@ export async function factoryFixture(provider: JsonRpcProvider, [dxdao, protocol
   const feeReceiverAddress = await dxswapFactory.feeTo()
   const feeReceiver = (await new DXswapFeeReceiver__factory(dxdao).deploy(dxdao.address, dxswapFactory.address, WETH.address, protocolFeeReceiver.address, fallbackReceiver.address)).attach(feeReceiverAddress)
 
-  return { dxswapFactory, feeSetter, feeReceiver, WETH }
+  // deplot FeeSplitter
+  const feeSplitter = await new DXswapFeeSplitter__factory(dxdao).deploy(dxdao.address, dxswapFactory.address, WETH.address, protocolFeeReceiver.address, fallbackReceiver.address)
+
+  return { dxswapFactory, feeSetter, feeReceiver, feeSplitter, WETH }
 }
 
 interface PairFixture extends FactoryFixture {
@@ -101,6 +107,11 @@ export async function pairFixture(provider: JsonRpcProvider, [dxdao, protocolFee
   // set receivers
   feeReceiver.connect(dxdao).changeReceivers(protocolFeeReceiver.address, fallbackReceiver.address)
 
+  //deploy FeeSplitter
+  const feeSplitter = await new DXswapFeeSplitter__factory(dxdao).deploy(dxdao.address, dxswapFactory.address, WETH.address, protocolFeeReceiver.address, fallbackReceiver.address)
+  // set receivers
+  feeSplitter.connect(dxdao).changeReceivers(protocolFeeReceiver.address, fallbackReceiver.address)
+
   // initialize DXswapPair factory
   const dxSwapPair_factory = await new DXswapPair__factory(dxdao).deploy()
 
@@ -124,5 +135,5 @@ export async function pairFixture(provider: JsonRpcProvider, [dxdao, protocolFee
   const WETH0PairAddress = await dxswapFactory.getPair(token0.address, WETH.address)
   const wethToken0Pair = dxSwapPair_factory.attach(WETH0PairAddress)
 
-  return { dxswapFactory, feeSetter, feeReceiver, WETH, token0, token1, token2, token3, dxswapPair01, dxswapPair23, dxswapPair03, wethToken1Pair, wethToken0Pair }
+  return { dxswapFactory, feeSetter, feeReceiver, feeSplitter, WETH, token0, token1, token2, token3, dxswapPair01, dxswapPair23, dxswapPair03, wethToken1Pair, wethToken0Pair }
 }
