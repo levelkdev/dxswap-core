@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
+import "@nomicfoundation/hardhat-chai-matchers";
 import "@nomiclabs/hardhat-ethers";
-import "@nomiclabs/hardhat-waffle";
 import "hardhat-deploy";
 import "@nomiclabs/hardhat-etherscan";
 import "solidity-coverage";
@@ -13,26 +13,9 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.8.15",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
-      {
-        version: "0.6.6",
-        settings: {
-          optimizer: {
-            enabled: true,
-            runs: 200,
-          },
-        },
-      },
-      {
         version: "0.5.16",
         settings: {
+          evmVersion: "istanbul",
           optimizer: {
             enabled: true,
             runs: 200,

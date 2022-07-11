@@ -49,9 +49,11 @@ interface PairFixture extends FactoryFixture {
   token1: ERC20
   token2: ERC20
   token3: ERC20
+  token4: ERC20
   dxswapPair01: DXswapPair
   dxswapPair23: DXswapPair
   dxswapPair03: DXswapPair
+  dxswapPair24: DXswapPair
   wethToken1Pair: DXswapPair
   wethToken0Pair: DXswapPair
 }
@@ -62,6 +64,7 @@ export async function pairFixture(provider: JsonRpcProvider, [dxdao, protocolFee
   const tokenB = await new ERC20__factory(dxdao).deploy(TOTAL_SUPPLY)
   const tokenC = await new ERC20__factory(dxdao).deploy(TOTAL_SUPPLY)
   const tokenD = await new ERC20__factory(dxdao).deploy(TOTAL_SUPPLY)
+  const tokenE = await new ERC20__factory(dxdao).deploy(TOTAL_SUPPLY)
 
   // deploy weth
   const WETH = await new WETH9__factory(dxdao).deploy()
@@ -73,11 +76,12 @@ export async function pairFixture(provider: JsonRpcProvider, [dxdao, protocolFee
 
   const token2 = tokenC.address < tokenD.address ? tokenC : tokenD
   const token3 = token2.address === tokenC.address ? tokenD : tokenC
+  const token4 = tokenE
 
   const dxSwapDeployer = await new DXswapDeployer__factory(dxdao).deploy(protocolFeeReceiver.address, dxdao.address, WETH.address,
-    [token0.address, token1.address, token2.address, token0.address, token0.address],
-    [token1.address, WETH.address, token3.address, token3.address, WETH.address],
-    [15, 15, 15, 15, 15],
+    [token0.address, token1.address, token2.address, token0.address, token0.address, token2.address],
+    [token1.address, WETH.address, token3.address, token3.address, WETH.address, token4.address],
+    [15, 15, 15, 15, 15, 15],
     overrides)
 
   await dxdao.sendTransaction({ to: dxSwapDeployer.address, gasPrice: 20000000000, value: expandTo18Decimals(1) })
@@ -108,13 +112,14 @@ export async function pairFixture(provider: JsonRpcProvider, [dxdao, protocolFee
   const pairAddress1 = await dxswapFactory.getPair(token0.address, token1.address)
   const dxswapPair01 = dxSwapPair_factory.attach(pairAddress1)
 
-  // await dxswapFactory.createPair(token2.address, token3.address, overrides)
   const pairAddress2 = await dxswapFactory.getPair(token2.address, token3.address)
   const dxswapPair23 = dxSwapPair_factory.attach(pairAddress2)
 
-  // await dxswapFactory.createPair(token0.address, token3.address, overrides)
   const pairAddress3 = await dxswapFactory.getPair(token0.address, token3.address)
   const dxswapPair03 = dxSwapPair_factory.attach(pairAddress3)
+
+  const pairAddress4 = await dxswapFactory.getPair(token2.address, token4.address)
+  const dxswapPair24 = dxSwapPair_factory.attach(pairAddress4)
 
   // create weth/erc20 pair
   const WETHPairAddress = await dxswapFactory.getPair(token1.address, WETH.address)
@@ -124,5 +129,5 @@ export async function pairFixture(provider: JsonRpcProvider, [dxdao, protocolFee
   const WETH0PairAddress = await dxswapFactory.getPair(token0.address, WETH.address)
   const wethToken0Pair = dxSwapPair_factory.attach(WETH0PairAddress)
 
-  return { dxswapFactory, feeSetter, feeReceiver, WETH, token0, token1, token2, token3, dxswapPair01, dxswapPair23, dxswapPair03, wethToken1Pair, wethToken0Pair }
+  return { dxswapFactory, feeSetter, feeReceiver, WETH, token0, token1, token2, token3, token4, dxswapPair01, dxswapPair23, dxswapPair03, dxswapPair24, wethToken1Pair, wethToken0Pair }
 }
