@@ -5,7 +5,8 @@ import { ethers } from "hardhat";
 import { BigNumber, constants } from 'ethers'
 import { pairFixture } from './shared/fixtures'
 import { DXswapFactory, DXswapFeeReceiver, DXswapFeeSetter, DXswapPair, ERC20 } from './../typechain'
-import { encodePrice, expandTo18Decimals, mineBlock } from './shared/utilities';
+import { encodePrice, expandTo18Decimals } from './shared/utilities';
+import { time } from '@nomicfoundation/hardhat-network-helpers'
 
 const MINIMUM_LIQUIDITY = BigNumber.from(10).pow(3)
 const ROUND_EXCEPTION = BigNumber.from(10).pow(4)
@@ -209,13 +210,16 @@ describe('DXswapPair', () => {
     await addLiquidity(token0Amount, token1Amount)
 
     // ensure that setting price{0,1}CumulativeLast for the first time doesn't affect our gas math
-    await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
+    await time.increase(1)
+
     await pair.sync(overrides)
 
     const swapAmount = expandTo18Decimals(1)
     const expectedOutputAmount = BigNumber.from('453305446940074565')
     await token1.transfer(pair.address, swapAmount)
-    await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
+
+    await time.increase(1)
+
     const tx = await pair.swap(expectedOutputAmount, 0, dxdao.address, '0x', overrides)
     const receipt = await tx.wait()
     expect(receipt.gasUsed).to.eq(75947)
@@ -268,7 +272,7 @@ describe('DXswapPair', () => {
 
     const swapAmount = expandTo18Decimals(3)
     await token0.transfer(pair.address, swapAmount)
-    await mineBlock(provider, blockTimestamp + 9)
+    await time.increaseTo(blockTimestamp + 9)
 
     // swap to a new price eagerly instead of syncing
     await pair.swap(0, expandTo18Decimals(1), dxdao.address, '0x', overrides) // make the price nice
@@ -277,7 +281,7 @@ describe('DXswapPair', () => {
     expect(await pair.price1CumulativeLast()).to.eq(initialPrice[1].mul(10))
     expect((await pair.getReserves())[2]).to.eq(blockTimestamp + 10)
 
-    await mineBlock(provider, blockTimestamp + 19)
+    await time.increaseTo(blockTimestamp + 19)
     await pair.sync(overrides)
     const newPrice = encodePrice(expandTo18Decimals(6), expandTo18Decimals(2))
     expect(await pair.price0CumulativeLast()).to.eq(initialPrice[0].mul(10).add(newPrice[0].mul(10)))

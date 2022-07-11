@@ -869,6 +869,13 @@
     deep-eql "^4.0.1"
     ordinal "^1.0.3"
 
+"@nomicfoundation/hardhat-network-helpers@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@nomicfoundation/hardhat-network-helpers/-/hardhat-network-helpers-1.0.2.tgz#f0e7216aeae118b8220b34c7fd199465a3f9dbd4"
+  integrity sha512-e+0kpXtNgRfCn3iq7pHmFwv+Ay8MkE7yP/UQdp7njRHo+LVWE3gJJ+qXB3z3isOLZ639tnxvG/8xjjYm0fvdRA==
+  dependencies:
+    ethereumjs-util "^7.1.4"
+
 "@nomiclabs/hardhat-ethers@npm:hardhat-deploy-ethers", hardhat-deploy-ethers@^0.3.0-beta.10:
   version "0.3.0-beta.13"
   resolved "https://registry.yarnpkg.com/hardhat-deploy-ethers/-/hardhat-deploy-ethers-0.3.0-beta.13.tgz#b96086ff768ddf69928984d5eb0a8d78cfca9366"
