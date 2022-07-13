@@ -56,13 +56,14 @@ contract DXswapFeeReceiver {
 
     // Calculates the CREATE2 address for a pair without making any external calls
     // Taken from DXswapLibrary, removed the factory parameter
+    // Init code pair hash changed with hardhat migration
     function pairFor(address tokenA, address tokenB) internal view returns (address pair) {
         (address token0, address token1) = sortTokens(tokenA, tokenB);
         pair = address(uint(keccak256(abi.encodePacked(
             hex'ff',
             factory,
             keccak256(abi.encodePacked(token0, token1)),
-            hex'd306a548755b9295ee49cc729e13ca4a45e00199bbd890fa146da43a50571776' // init code hash
+            hex'9e43bdf627764c4a3e3e452d1b558fff8466adc4dc8a900396801d26f4c542f2' // init code hash
         ))));
     }
     
