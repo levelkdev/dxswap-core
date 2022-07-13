@@ -1,11 +1,12 @@
 import dotenv from "dotenv";
+import { HardhatUserConfig } from "hardhat/types";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@nomiclabs/hardhat-ethers";
-import "hardhat-deploy";
 import "@nomiclabs/hardhat-etherscan";
-import "solidity-coverage";
 import "@typechain/hardhat";
-import { HardhatUserConfig } from "hardhat/types";
+import "hardhat-deploy";
+import "hardhat-gas-reporter";
+import "solidity-coverage";
 
 dotenv.config();
 
@@ -55,6 +56,10 @@ const config: HardhatUserConfig = {
     deployer: 0,
     account1: 1,
     account2: 2,
+  },
+  gasReporter: {
+    enabled: true,
+    currency: "USD"
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_KEY,
