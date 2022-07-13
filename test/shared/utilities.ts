@@ -1,4 +1,4 @@
-import { BigNumber, Contract, providers, constants } from 'ethers'
+import { BigNumber, Contract, constants } from 'ethers'
 import {
   getAddress,
   keccak256,
