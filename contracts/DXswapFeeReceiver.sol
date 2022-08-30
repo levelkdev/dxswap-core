@@ -8,35 +8,35 @@ import './libraries/SafeMath.sol';
 
 contract DXswapFeeReceiver {
     using SafeMath for uint256;
-
-    address public owner;
     IDXswapFactory public factory;
-    address public WETH;
+    
+    uint16 public maxSwapPriceImpact = 100; // uses default 1% as max allowed price impact for takeProtocolFee swap
     address public ethReceiver;
     address public fallbackReceiver;
-    uint32 public maxSwapPriceImpact = 100; // uses default 1% as max allowed price impact for takeProtocolFee swap
+    address public owner;
+    address public nativeCurrencyWrapper;
 
     // if needed set address of external project which can get % of total earned protocol fee
     // % of total protocol fee to external project (100 means 1%) is within the range <0, 50>
     struct ExternalFeeReceiver {
         address externalReceiver;
-        uint32 feePercentage;
+        uint16 feePercentage;
     }
 
     mapping(address => ExternalFeeReceiver) public externalFeeReceivers;
 
-    event TakeProtocolFee(address indexed sender, address indexed to, uint256 NumberOfPairs);
+    event TakeProtocolFee(address indexed sender, address indexed to, uint256 numberOfPairs);
 
     constructor(
         address _owner,
         address _factory,
-        address _WETH,
+        address _nativeCurrencyWrapper,
         address _ethReceiver,
         address _fallbackReceiver
     ) public {
         owner = _owner;
         factory = IDXswapFactory(_factory);
-        WETH = _WETH;
+        nativeCurrencyWrapper = _nativeCurrencyWrapper;
         ethReceiver = _ethReceiver;
         fallbackReceiver = _fallbackReceiver;
     }
@@ -93,25 +93,25 @@ contract DXswapFeeReceiver {
 
     // Done with code form DXswapRouter and DXswapLibrary, removed the deadline argument
     function _swapTokensForETH(uint256 amountIn, address fromToken) internal returns (uint256 amountOut) {
-        IDXswapPair pairToUse = IDXswapPair(pairFor(fromToken, WETH));
+        IDXswapPair pairToUse = IDXswapPair(pairFor(fromToken, nativeCurrencyWrapper));
 
         (uint256 reserve0, uint256 reserve1, ) = pairToUse.getReserves();
-        (uint256 reserveIn, uint256 reserveOut) = fromToken < WETH ? (reserve0, reserve1) : (reserve1, reserve0);
+        (uint256 reserveIn, uint256 reserveOut) = fromToken < nativeCurrencyWrapper ? (reserve0, reserve1) : (reserve1, reserve0);
 
-        require(reserveIn > 0 && reserveOut > 0, 'DXswapFeeReceiver: INSUFFICIENT_LIQUIDITY'); // should never happen since pool was checked before
-        uint256 amountInWithFee = amountIn.mul(uint256(10000).sub(pairToUse.swapFee()));
-        uint256 numerator = amountInWithFee.mul(reserveOut);
-        uint256 denominator = reserveIn.mul(10000).add(amountInWithFee);
+        require(reserveIn > 0 && reserveOut > 0, 'DXswapFeeSplitter: INSUFFICIENT_LIQUIDITY'); // should never happen since pool was checked before
+        uint256 amountInWithFee = amountIn * (10000 - pairToUse.swapFee());
+        uint256 numerator = amountInWithFee * reserveOut;
+        uint256 denominator = reserveIn * 10000 + amountInWithFee;
         amountOut = numerator / denominator;
 
         TransferHelper.safeTransfer(fromToken, address(pairToUse), amountIn);
 
-        (uint256 amount0Out, uint256 amount1Out) = fromToken < WETH ? (uint256(0), amountOut) : (amountOut, uint256(0));
+        (uint256 amount0Out, uint256 amount1Out) = fromToken < nativeCurrencyWrapper ? (uint256(0), amountOut) : (amountOut, uint256(0));
 
         pairToUse.swap(amount0Out, amount1Out, address(this), new bytes(0));
     }
 
-    // Helper function to know if token-WETH pool exists and has enough liquidity
+    // Helper function to know if token-nativeCurrencyWrapper pool exists and has enough liquidity
     function _isSwapPossible(
         address token0,
         address token1,
@@ -124,7 +124,7 @@ contract DXswapFeeReceiver {
         (uint256 reserveIn, uint256 reserveOut) = token0 < token1 ? (reserve0, reserve1) : (reserve1, reserve0);
         if (reserveIn == 0 || reserveOut == 0) return false;
 
-        uint256 priceImpact = amount.mul(10000) / reserveIn; // simplified formula
+        uint256 priceImpact = amount * 10000 / reserveIn; // simplified formula
         if (priceImpact > maxSwapPriceImpact) return false;
 
         return true;
@@ -141,10 +141,10 @@ contract DXswapFeeReceiver {
         uint32 _percentFeeToExternalReceiver = externalFeeReceivers[pair].feePercentage;
 
         if (_percentFeeToExternalReceiver > 0 && _externalFeeReceiver != address(0)) {
-            uint256 feeToExternalReceiver = amount.mul(_percentFeeToExternalReceiver) / 10000;
-            uint256 feeToAvatarDAO = amount.sub(feeToExternalReceiver);
-            if (token == WETH) {
-                IWETH(WETH).withdraw(amount);
+            uint256 feeToExternalReceiver = amount * _percentFeeToExternalReceiver / 10000;
+            uint256 feeToAvatarDAO = amount - feeToExternalReceiver;
+            if (token == nativeCurrencyWrapper) {
+                IWETH(nativeCurrencyWrapper).withdraw(amount);
                 TransferHelper.safeTransferETH(_externalFeeReceiver, feeToExternalReceiver);
                 TransferHelper.safeTransferETH(ethReceiver, feeToAvatarDAO);
             } else {
@@ -152,8 +152,8 @@ contract DXswapFeeReceiver {
                 TransferHelper.safeTransfer(token, fallbackReceiver, feeToAvatarDAO);
             }
         } else {
-            if (token == WETH) {
-                IWETH(WETH).withdraw(amount);
+            if (token == nativeCurrencyWrapper) {
+                IWETH(nativeCurrencyWrapper).withdraw(amount);
                 TransferHelper.safeTransferETH(ethReceiver, amount);
             } else {
                 TransferHelper.safeTransfer(token, fallbackReceiver, amount);
@@ -167,12 +167,12 @@ contract DXswapFeeReceiver {
         address token,
         uint256 amount
     ) internal {
-        if (token != WETH && _isSwapPossible(token, WETH, amount)) {
-            // If it is not WETH and there is a direct path to WETH, swap tokens
+        if (token != nativeCurrencyWrapper && _isSwapPossible(token, nativeCurrencyWrapper, amount)) {
+            // If it is not nativeCurrencyWrapper and there is a direct path to nativeCurrencyWrapper, swap tokens
             uint256 amountOut = _swapTokensForETH(amount, token);
-            _splitAndTransferFee(pair, WETH, amountOut);
+            _splitAndTransferFee(pair, nativeCurrencyWrapper, amountOut);
         } else {
-            // If it is WETH or there is not a direct path from token to WETH, transfer tokens
+            // If it is nativeCurrencyWrapper or there is not a direct path from token to nativeCurrencyWrapper, transfer tokens
             _splitAndTransferFee(pair, token, amount);
         }
     }
@@ -190,8 +190,9 @@ contract DXswapFeeReceiver {
         emit TakeProtocolFee(msg.sender, ethReceiver, pairs.length);
     }
 
-    // called by the owner to set maximum swap price impact allowed for single token-weth swap (within 0-100% range)
-    function setMaxSwapPriceImpact(uint32 _maxSwapPriceImpact) external {
+    // called by the owner to set maximum swap price impact allowed for single swap 
+    // 0-100% range where 100 is 1%
+    function setMaxSwapPriceImpact(uint16 _maxSwapPriceImpact) external {
         require(msg.sender == owner, 'DXswapFeeReceiver: CALLER_NOT_OWNER');
         require(_maxSwapPriceImpact > 0 && _maxSwapPriceImpact < 10000, 'DXswapFeeReceiver: FORBIDDEN_PRICE_IMPACT');
         maxSwapPriceImpact = _maxSwapPriceImpact;
@@ -204,8 +205,14 @@ contract DXswapFeeReceiver {
     }
 
     // called by the owner to set fee percentage to external receiver
-    function setFeePercentageToExternalReceiver(address _pair, uint32 _feePercentageToExternalReceiver) external {
+    function setFeePercentageToExternalReceiver(address _pair, uint16 _feePercentageToExternalReceiver) external {
         require(msg.sender == owner, 'DXswapFeeReceiver: CALLER_NOT_OWNER');
+        // fee percentage check if is not more than 50%
+        require(
+            _feePercentageToExternalReceiver <= 5000,
+            'DXswapFeeReceiver: FORBIDDEN_FEE_PERCENTAGE_SPLIT'
+        );
+
         IDXswapPair swapPair = IDXswapPair(_pair);
         uint256 feeReceiverBalance = swapPair.balanceOf(address(this));
         if (feeReceiverBalance > 0) {
@@ -218,13 +225,7 @@ contract DXswapFeeReceiver {
             if (amount1 > 0) _takeTokenOrETH(address(swapPair), token1, amount1);
             emit TakeProtocolFee(msg.sender, ethReceiver, 1);
         }
-        require(swapPair.balanceOf(address(this)) == 0, 'DXswapFeeReceiver: TOKENS_NOT_BURNED');
 
-        // fee percentage check
-        require(
-            _feePercentageToExternalReceiver >= 0 && _feePercentageToExternalReceiver <= 5000,
-            'DXswapFeeReceiver: FORBIDDEN_FEE_PERCENTAGE_SPLIT'
-        );
         // update the split percentage for specific pair
         externalFeeReceivers[_pair].feePercentage = _feePercentageToExternalReceiver;
     }
