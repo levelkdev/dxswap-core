@@ -25,3 +25,17 @@ The following assumes the use of `node@>=10`.
 ## Flatten Contracts
 
 `yarn flattener`
+
+## Deployment
+
+Add `PRIVATE_KEY` of deployer to `.env`
+
+```shell
+echo "PRIVATE_KEY=<private-key>" > .env
+```
+
+Deploy to target network. Make sure its configuration exists in `hardhat.config.ts`
+
+```shell
+hardhat run --network gnosis scripts/deploy.ts
+```
