@@ -13,3 +13,4 @@ coverage.json
 typechain
 deployments/hardhat
 deployments/localhost
+.vscode

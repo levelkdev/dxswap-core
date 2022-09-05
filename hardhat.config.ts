@@ -6,6 +6,7 @@ import "@nomiclabs/hardhat-etherscan";
 import "solidity-coverage";
 import "@typechain/hardhat";
 import { HardhatUserConfig } from "hardhat/types";
+import "hardhat-gas-reporter"
 
 dotenv.config();
 
@@ -13,7 +14,7 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.8.15",
+        version: "0.8.16",
         settings: {
           optimizer: {
             enabled: true,
@@ -75,6 +76,10 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_KEY,
+  },
+  gasReporter: {
+    currency: "USD",
+    enabled: true,
   },
 };
 export default config;
