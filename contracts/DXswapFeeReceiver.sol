@@ -113,6 +113,8 @@ contract DXswapFeeReceiver {
     
     // Take what was charged as protocol fee from the DXswap pair liquidity
     function takeProtocolFee(IDXswapPair[] calldata pairs) external {
+        require(msg.sender == owner, 'DXswapFeeReceiver: FORBIDDEN');
+        
         for (uint i = 0; i < pairs.length; i++) {
             address token0 = pairs[i].token0();
             address token1 = pairs[i].token1();
