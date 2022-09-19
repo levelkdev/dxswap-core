@@ -11,7 +11,7 @@ import "solidity-coverage";
 
 dotenv.config();
 
-const infuraApiKey = process.env.KEY_INFURA_API_KEY;
+const infuraKey = process.env.INFURA_KEY;
 const accounts = process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [];
 
 const config: HardhatUserConfig = {
@@ -66,13 +66,23 @@ const config: HardhatUserConfig = {
       gasPrice: 20000000000, //20 Gwei,
     },
     mainnet: {
-      url: `https://mainnet.infura.io/v3/${infuraApiKey}`,
+      live: true,
+      saveDeployments: true,
+      url: `https://mainnet.infura.io/v3/${infuraKey}`,
       accounts,
     },
     gnosis: {
+      live: true,
+      saveDeployments: true,
       url: "https://rpc.gnosischain.com/",
       accounts,
     },
+    rinkeby: {
+      live: false,
+      saveDeployments: true,
+      url: `https://rinkeby.infura.io/v3/${infuraKey}`,
+      accounts,
+  },
   },
   typechain: {
     outDir: "typechain",
@@ -84,8 +94,8 @@ const config: HardhatUserConfig = {
     account2: 2,
   },
   gasReporter: {
-    enabled: process.env.GAS_REPORT_ENABLED === "true",
     currency: "USD",
+    enabled: process.env.GAS_REPORT_ENABLED === "true",
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_KEY,
