@@ -56,8 +56,13 @@
     "test:coverage": "hardhat coverage",
     "test:gasreport": "GAS_REPORT_ENABLED=true hardhat test",
     "prepublishOnly": "yarn test",
-    "flattener": "./scripts/flattener.sh",
-    "build-package": "ts-node scripts/bundler.ts"
+    "build-package": "ts-node scripts/bundler.ts",
+    "deploy:mainnet": "hardhat deploy --network mainnet --tags CORE_CONTRACTS",
+    "verify:mainnet": "set -a; . ./.env; set +a; npx hardhat --network mainnet etherscan-verify --api-key \"$ETHERSCAN_KEY\"",
+    "deploy:gnosis": "hardhat deploy --network gnosis --tags CORE_CONTRACTS",
+    "verify:gnosis": "set -a; . ./.env; set +a; npx hardhat --network gnosis etherscan-verify --api-key \"$ETHERSCAN_KEY\"",
+    "deploy:rinkeby": "hardhat deploy --network rinkeby --tags CORE_CONTRACTS",
+    "verify:rinkeby": "set -a; . ./.env; set +a; npx hardhat --network rinkeby etherscan-verify --api-key \"$ETHERSCAN_KEY\""
   },
   "license": "AGPL-3.0-or-later"
 }
