@@ -32,6 +32,7 @@ describe('DXswapFeeReceiver', () => {
   let pair23: DXswapPair
   let pair03: DXswapPair
   let wethPair: DXswapPair
+  let wethToken1Pair: DXswapPair
   let WETH: WETH9
 
   beforeEach('assign signers', async function () {
@@ -55,6 +56,7 @@ describe('DXswapFeeReceiver', () => {
     pair23 = fixture.dxswapPair23
     pair03 = fixture.dxswapPair03
     wethPair = fixture.wethToken1Pair
+    wethToken1Pair = fixture.wethToken0Pair
     WETH = fixture.WETH
   })
 
