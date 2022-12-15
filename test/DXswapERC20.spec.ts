@@ -1,40 +1,57 @@
-import chai, { expect } from 'chai'
-import { Contract } from 'ethers'
-import { MaxUint256 } from 'ethers/constants'
-import { bigNumberify, hexlify, keccak256, defaultAbiCoder, toUtf8Bytes } from 'ethers/utils'
-import { solidity, MockProvider, deployContract } from 'ethereum-waffle'
-import { ecsign } from 'ethereumjs-util'
-
+import '@nomiclabs/hardhat-ethers'
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
+import { expect } from 'chai'
+import { ethers, network } from "hardhat";
+import { BigNumber, constants, Wallet } from 'ethers'
 import { expandTo18Decimals, getApprovalDigest } from './shared/utilities'
+import { pairFixture } from './shared/fixtures'
+import { ERC20 } from './../typechain'
+import { defaultAbiCoder, hexlify, keccak256, toUtf8Bytes } from 'ethers/lib/utils';
+import { ecsign } from 'ethereumjs-util';
 
-import ERC20 from '../build/ERC20.json'
+const { MaxUint256 } = constants
 
-chai.use(solidity)
+const overrides = {
+  gasLimit: 29999999
+}
 
-const TOTAL_SUPPLY = expandTo18Decimals(10000)
 const TEST_AMOUNT = expandTo18Decimals(10)
+const TOTAL_SUPPLY = expandTo18Decimals(10000)
 
 describe('DXswapERC20', () => {
-  const provider = new MockProvider({
-    hardfork: 'istanbul',
-    mnemonic: 'horn horn horn horn horn horn horn horn horn horn horn horn',
-    gasLimit: 9999999
-  })
-  const [wallet, other] = provider.getWallets()
+  const provider = ethers.provider
+  let dxdao: SignerWithAddress
+  let tokenOwner: SignerWithAddress
+  let ethReceiver: SignerWithAddress
+  let fallbackReceiver: SignerWithAddress
+  let other: SignerWithAddress
+  let DXS: ERC20
+  let privateKey: string
+  let customWallet: Wallet
+  let customSigner: SignerWithAddress
 
-  let token: Contract
-  beforeEach(async () => {
-    token = await deployContract(wallet, ERC20, [TOTAL_SUPPLY])
+  beforeEach('assign wallets', async function () {
+    const signers = await ethers.getSigners()
+    dxdao = signers[0]
+    tokenOwner = signers[1]
+    ethReceiver = signers[2]
+    fallbackReceiver = signers[3]
+    other = signers[4]
+  })
+
+  beforeEach('deploy fixture', async () => {
+    const fixture = await pairFixture(provider, [dxdao, ethReceiver, fallbackReceiver])
+    DXS = fixture.token0
   })
 
   it('name, symbol, decimals, totalSupply, balanceOf, DOMAIN_SEPARATOR, PERMIT_TYPEHASH', async () => {
-    const name = await token.name()
+    const name = await DXS.name()
     expect(name).to.eq('DXswap')
-    expect(await token.symbol()).to.eq('DXS')
-    expect(await token.decimals()).to.eq(18)
-    expect(await token.totalSupply()).to.eq(TOTAL_SUPPLY)
-    expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY)
-    expect(await token.DOMAIN_SEPARATOR()).to.eq(
+    expect(await DXS.symbol()).to.eq('DXS')
+    expect(await DXS.decimals()).to.eq(18)
+    expect(await DXS.totalSupply()).to.eq(TOTAL_SUPPLY)
+    expect(await DXS.balanceOf(dxdao.address)).to.eq(TOTAL_SUPPLY)
+    expect(await DXS.DOMAIN_SEPARATOR()).to.eq(
       keccak256(
         defaultAbiCoder.encode(
           ['bytes32', 'bytes32', 'bytes32', 'uint256', 'address'],
@@ -45,72 +62,88 @@ describe('DXswapERC20', () => {
             keccak256(toUtf8Bytes(name)),
             keccak256(toUtf8Bytes('1')),
             1,
-            token.address
+            DXS.address
           ]
         )
       )
     )
-    expect(await token.PERMIT_TYPEHASH()).to.eq(
+    expect(await DXS.PERMIT_TYPEHASH()).to.eq(
       keccak256(toUtf8Bytes('Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)'))
     )
   })
 
   it('approve', async () => {
-    await expect(token.approve(other.address, TEST_AMOUNT))
-      .to.emit(token, 'Approval')
-      .withArgs(wallet.address, other.address, TEST_AMOUNT)
-    expect(await token.allowance(wallet.address, other.address)).to.eq(TEST_AMOUNT)
+    await expect(DXS.approve(other.address, TEST_AMOUNT))
+      .to.emit(DXS, 'Approval')
+      .withArgs(dxdao.address, other.address, TEST_AMOUNT)
+    expect(await DXS.allowance(dxdao.address, other.address)).to.eq(TEST_AMOUNT)
   })
 
   it('transfer', async () => {
-    await expect(token.transfer(other.address, TEST_AMOUNT))
-      .to.emit(token, 'Transfer')
-      .withArgs(wallet.address, other.address, TEST_AMOUNT)
-    expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY.sub(TEST_AMOUNT))
-    expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT)
+    await expect(DXS.transfer(other.address, TEST_AMOUNT, overrides))
+      .to.emit(DXS, 'Transfer')
+      .withArgs(dxdao.address, other.address, TEST_AMOUNT)
+    expect(await DXS.balanceOf(dxdao.address)).to.eq(TOTAL_SUPPLY.sub(TEST_AMOUNT))
+    expect(await DXS.balanceOf(other.address)).to.eq(TEST_AMOUNT)
   })
 
   it('transfer:fail', async () => {
-    await expect(token.transfer(other.address, TOTAL_SUPPLY.add(1))).to.be.reverted // ds-math-sub-underflow
-    await expect(token.connect(other).transfer(wallet.address, 1)).to.be.reverted // ds-math-sub-underflow
+    await expect(DXS.transfer(other.address, TOTAL_SUPPLY.add(1))).to.be.reverted // ds-math-sub-underflow
+    await expect(DXS.connect(other).transfer(dxdao.address, 1)).to.be.reverted // ds-math-sub-underflow
   })
 
   it('transferFrom', async () => {
-    await token.approve(other.address, TEST_AMOUNT)
-    await expect(token.connect(other).transferFrom(wallet.address, other.address, TEST_AMOUNT))
-      .to.emit(token, 'Transfer')
-      .withArgs(wallet.address, other.address, TEST_AMOUNT)
-    expect(await token.allowance(wallet.address, other.address)).to.eq(0)
-    expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY.sub(TEST_AMOUNT))
-    expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT)
+    await DXS.approve(other.address, TEST_AMOUNT, overrides)
+    await expect(DXS.connect(other).transferFrom(dxdao.address, other.address, TEST_AMOUNT, overrides))
+      .to.emit(DXS, 'Transfer')
+      .withArgs(dxdao.address, other.address, TEST_AMOUNT)
+    expect(await DXS.allowance(dxdao.address, other.address)).to.eq(0)
+    expect(await DXS.balanceOf(dxdao.address)).to.eq(TOTAL_SUPPLY.sub(TEST_AMOUNT))
+    expect(await DXS.balanceOf(other.address)).to.eq(TEST_AMOUNT)
   })
 
   it('transferFrom:max', async () => {
-    await token.approve(other.address, MaxUint256)
-    await expect(token.connect(other).transferFrom(wallet.address, other.address, TEST_AMOUNT))
-      .to.emit(token, 'Transfer')
-      .withArgs(wallet.address, other.address, TEST_AMOUNT)
-    expect(await token.allowance(wallet.address, other.address)).to.eq(MaxUint256)
-    expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY.sub(TEST_AMOUNT))
-    expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT)
+    await DXS.approve(other.address, MaxUint256, overrides)
+    await expect(DXS.connect(other).transferFrom(dxdao.address, other.address, TEST_AMOUNT, overrides))
+      .to.emit(DXS, 'Transfer')
+      .withArgs(dxdao.address, other.address, TEST_AMOUNT)
+    expect(await DXS.allowance(dxdao.address, other.address)).to.eq(MaxUint256)
+    expect(await DXS.balanceOf(dxdao.address)).to.eq(TOTAL_SUPPLY.sub(TEST_AMOUNT))
+    expect(await DXS.balanceOf(other.address)).to.eq(TEST_AMOUNT)
   })
 
   it('permit', async () => {
-    const nonce = await token.nonces(wallet.address)
+    // custom wallet needs to be create due to private key
+    customWallet = ethers.Wallet.createRandom().connect(ethers.provider);
+    privateKey = customWallet.privateKey
+
+    // add wallet to hardhat accounts
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [customWallet.address]
+    })
+
+    customSigner = await ethers.getSigner(customWallet.address)
+    await dxdao.sendTransaction({
+      value: expandTo18Decimals(500),
+      to: customSigner.address,
+    });
+
+    const nonce = await DXS.nonces(customSigner.address)
     const deadline = MaxUint256
     const digest = await getApprovalDigest(
-      token,
-      { owner: wallet.address, spender: other.address, value: TEST_AMOUNT },
+      DXS,
+      { owner: customSigner.address, spender: other.address, value: TEST_AMOUNT },
       nonce,
       deadline
     )
 
-    const { v, r, s } = ecsign(Buffer.from(digest.slice(2), 'hex'), Buffer.from(wallet.privateKey.slice(2), 'hex'))
+    const { v, r, s } = ecsign(Buffer.from(digest.slice(2), 'hex'), Buffer.from(privateKey.slice(2), 'hex'))
 
-    await expect(token.permit(wallet.address, other.address, TEST_AMOUNT, deadline, v, hexlify(r), hexlify(s)))
-      .to.emit(token, 'Approval')
-      .withArgs(wallet.address, other.address, TEST_AMOUNT)
-    expect(await token.allowance(wallet.address, other.address)).to.eq(TEST_AMOUNT)
-    expect(await token.nonces(wallet.address)).to.eq(bigNumberify(1))
+    await expect(DXS.permit(customSigner.address, other.address, TEST_AMOUNT, deadline, v, hexlify(r), hexlify(s)))
+      .to.emit(DXS, 'Approval')
+      .withArgs(customSigner.address, other.address, TEST_AMOUNT)
+    expect(await DXS.allowance(customSigner.address, other.address)).to.eq(TEST_AMOUNT)
+    expect(await DXS.nonces(customSigner.address)).to.eq(BigNumber.from(1))
   })
 })
