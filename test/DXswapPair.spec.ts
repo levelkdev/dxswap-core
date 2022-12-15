@@ -209,7 +209,8 @@ describe('DXswapPair', () => {
     await addLiquidity(token0Amount, token1Amount)
 
     // ensure that setting price{0,1}CumulativeLast for the first time doesn't affect our gas math
-    await mineBlock(provider, (await provider.getBlock('latest')).timestamp + 1)
+    await time.increase(1)
+
     await pair.sync(overrides)
 
     const swapAmount = expandTo18Decimals(1)

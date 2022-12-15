@@ -1,20 +1,24 @@
 import dotenv from "dotenv";
-import "@nomiclabs/hardhat-ethers";
-import "@nomiclabs/hardhat-waffle";
-import "hardhat-deploy";
-import "@nomiclabs/hardhat-etherscan";
-import "solidity-coverage";
-import "@typechain/hardhat";
 import { HardhatUserConfig } from "hardhat/types";
-import "hardhat-gas-reporter"
+import "@nomicfoundation/hardhat-chai-matchers";
+import "@nomiclabs/hardhat-ethers";
+import "@nomiclabs/hardhat-etherscan";
+import "@typechain/hardhat";
+import "hardhat-dependency-compiler";
+import "hardhat-deploy";
+import "hardhat-gas-reporter";
+import "solidity-coverage";
 
 dotenv.config();
+
+const infuraKey = process.env.INFURA_KEY;
+const accounts = process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [];
 
 const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.8.16",
+        version: "0.8.15",
         settings: {
           optimizer: {
             enabled: true,
@@ -51,9 +55,6 @@ const config: HardhatUserConfig = {
   },
   defaultNetwork: "hardhat",
   networks: {
-    ganache: {
-      url: "HTTP://127.0.0.1:7545",
-    },
     hardhat: {
       blockGasLimit: 30000000, //default 30 000 000
       gasPrice: 1000000000, //10 Gwei	
@@ -64,6 +65,24 @@ const config: HardhatUserConfig = {
       url: "http://localhost:8545",
       gasPrice: 20000000000, //20 Gwei,
     },
+    mainnet: {
+      live: true,
+      saveDeployments: true,
+      url: `https://mainnet.infura.io/v3/${infuraKey}`,
+      accounts,
+    },
+    gnosis: {
+      live: true,
+      saveDeployments: true,
+      url: "https://rpc.gnosischain.com/",
+      accounts,
+    },
+    rinkeby: {
+      live: false,
+      saveDeployments: true,
+      url: `https://rinkeby.infura.io/v3/${infuraKey}`,
+      accounts,
+  },
   },
   typechain: {
     outDir: "typechain",
@@ -74,12 +93,17 @@ const config: HardhatUserConfig = {
     account1: 1,
     account2: 2,
   },
+  gasReporter: {
+    currency: "USD",
+    enabled: process.env.GAS_REPORT_ENABLED === "true",
+  },
   etherscan: {
     apiKey: process.env.ETHERSCAN_KEY,
   },
-  gasReporter: {
-    currency: "USD",
-    enabled: false,
-  },
+  dependencyCompiler: {
+    paths: [
+      './contracts/test',
+    ]
+  }
 };
 export default config;
