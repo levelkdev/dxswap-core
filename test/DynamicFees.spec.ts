@@ -13,7 +13,7 @@ const SWAP_DEN = BigNumber.from(10000);
 const ROUND_EXCEPTION = BigNumber.from(10).pow(4)
 
 const overrides = {
-  gasLimit: 9999999
+  gasLimit: 15000000
 }
 
 describe('DXswapFeeReceiver', () => {

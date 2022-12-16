@@ -1,4 +1,4 @@
-import { BigNumber, Contract, constants } from 'ethers'
+import { BigNumber, Contract, providers, constants } from 'ethers'
 import {
   getAddress,
   keccak256,
@@ -78,6 +78,14 @@ export async function getApprovalDigest(
       ]
     )
   )
+}
+
+export async function mineBlock(provider: providers.JsonRpcProvider, timestamp: number, force = false): Promise<void> {
+  if (force) {
+    await provider.send("evm_setNextBlockTimestamp", [timestamp])
+    return provider.send("evm_mine", [])
+  }
+  return provider.send('evm_mine', [timestamp])
 }
 
 export function encodePrice(reserve0: BigNumber, reserve1: BigNumber) {

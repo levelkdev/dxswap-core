@@ -33,8 +33,8 @@ describe('DXswapFeeReceiver', () => {
   let pair23: DXswapPair
   let pair03: DXswapPair
   let pair24: DXswapPair
-  let wethPair: DXswapPair
-  let wethTkn0Pair: DXswapPair
+  let wethToken1Pair: DXswapPair
+  let wethToken0Pair: DXswapPair
   let WETH: WETH9
 
   beforeEach('assign signers', async function () {
@@ -54,13 +54,11 @@ describe('DXswapFeeReceiver', () => {
     token1 = fixture.token1
     token2 = fixture.token2
     token3 = fixture.token3
-    token4 = fixture.token4
     pair01 = fixture.dxswapPair01
     pair23 = fixture.dxswapPair23
     pair03 = fixture.dxswapPair03
-    pair24 = fixture.dxswapPair24
-    wethPair = fixture.wethToken1Pair
-    wethTkn0Pair = fixture.wethToken0Pair
+    wethToken1Pair = fixture.wethToken1Pair
+    wethToken0Pair = fixture.wethToken0Pair
     WETH = fixture.WETH
   })
 
@@ -72,13 +70,16 @@ describe('DXswapFeeReceiver', () => {
   }
 
   function getAmountOutSync(
-    reserve0: BigNumber, reserve1: BigNumber, usingToken0: boolean, amountIn: BigNumber, swapFee: BigNumber
+    reserve0: BigNumber,
+    reserve1: BigNumber,
+    usingToken0: boolean,
+    amountIn: BigNumber,
+    swapFee: BigNumber
   ) {
     const tokenInBalance = usingToken0 ? reserve0 : reserve1
     const tokenOutBalance = usingToken0 ? reserve1 : reserve0
     const amountInWithFee = amountIn.mul(FEE_DENOMINATOR.sub(swapFee))
-    return amountInWithFee.mul(tokenOutBalance)
-      .div(tokenInBalance.mul(FEE_DENOMINATOR).add(amountInWithFee))
+    return amountInWithFee.mul(tokenOutBalance).div(tokenInBalance.mul(FEE_DENOMINATOR).add(amountInWithFee))
   }
 
   // Where token0-token1 and token1-WETH pairs exist
@@ -93,9 +94,9 @@ describe('DXswapFeeReceiver', () => {
       await token3.transfer(pair03.address, tokenAmount)
       await pair03.mint(dxdao.address, overrides)
 
-      await token0.transfer(wethTkn0Pair.address, tokenAmount)
-      await WETH.transfer(wethTkn0Pair.address, wethAmount)
-      await wethTkn0Pair.mint(dxdao.address, overrides)
+      await token0.transfer(wethToken0Pair.address, tokenAmount)
+      await WETH.transfer(wethToken0Pair.address, wethAmount)
+      await wethToken0Pair.mint(dxdao.address, overrides)
 
       let amountOut = await getAmountOut(pair03, token0.address, amountIn);
 
@@ -121,7 +122,7 @@ describe('DXswapFeeReceiver', () => {
       const token0FromProtocolFee = protocolFeeLPToknesReceived
         .mul(await token0.balanceOf(pair03.address)).div(await pair03.totalSupply());
 
-      const wethFromToken0FromProtocolFee = await getAmountOut(wethTkn0Pair, token0.address, token0FromProtocolFee);
+      const wethFromToken0FromProtocolFee = await getAmountOut(wethToken0Pair, token0.address, token0FromProtocolFee);
       const protocolFeeReceiverBalanceBeforeTake = await provider.getBalance(protocolFeeReceiver.address)
 
       await feeReceiver.connect(dxdao).takeProtocolFee([pair03.address], overrides)
@@ -143,47 +144,47 @@ describe('DXswapFeeReceiver', () => {
     const wethAmount = expandTo18Decimals(40);
     const amountIn = expandTo18Decimals(20);
 
-    await token1.transfer(wethPair.address, tokenAmount, overrides)
-    await WETH.transfer(wethPair.address, wethAmount, overrides)
-    await wethPair.mint(dxdao.address, overrides)
+    await token1.transfer(wethToken1Pair.address, tokenAmount, overrides)
+    await WETH.transfer(wethToken1Pair.address, wethAmount, overrides)
+    await wethToken1Pair.mint(dxdao.address, overrides)
 
     const token1IsFirstToken = (token1.address < WETH.address)
 
-    let amountOut = await getAmountOut(wethPair, token1.address, amountIn);
-    await token1.transfer(wethPair.address, amountIn, overrides)
-    await wethPair.swap(
+    let amountOut = await getAmountOut(wethToken1Pair, token1.address, amountIn);
+    await token1.transfer(wethToken1Pair.address, amountIn, overrides)
+    await wethToken1Pair.swap(
       token1IsFirstToken ? 0 : amountOut,
       token1IsFirstToken ? amountOut : 0,
       dxdao.address, '0x', overrides
     )
 
-    amountOut = await getAmountOut(wethPair, WETH.address, amountIn);
-    await WETH.transfer(wethPair.address, amountIn, overrides)
-    await wethPair.swap(
+    amountOut = await getAmountOut(wethToken1Pair, WETH.address, amountIn);
+    await WETH.transfer(wethToken1Pair.address, amountIn, overrides)
+    await wethToken1Pair.swap(
       token1IsFirstToken ? amountOut : 0,
       token1IsFirstToken ? 0 : amountOut,
       dxdao.address, '0x', overrides
     )
 
-    const protocolFeeToReceive = await calcProtocolFee(wethPair, factory);
+    const protocolFeeToReceive = await calcProtocolFee(wethToken1Pair, factory);
 
-    await token1.transfer(wethPair.address, expandTo18Decimals(10), overrides)
-    await WETH.transfer(wethPair.address, expandTo18Decimals(10), overrides)
-    await wethPair.mint(dxdao.address, overrides)
+    await token1.transfer(wethToken1Pair.address, expandTo18Decimals(10), overrides)
+    await WETH.transfer(wethToken1Pair.address, expandTo18Decimals(10), overrides)
+    await wethToken1Pair.mint(dxdao.address, overrides)
 
-    const protocolFeeLPToknesReceived = await wethPair.balanceOf(feeReceiver.address);
+    const protocolFeeLPToknesReceived = await wethToken1Pair.balanceOf(feeReceiver.address);
     expect(protocolFeeLPToknesReceived.div(ROUND_EXCEPTION))
       .to.be.eq(protocolFeeToReceive.div(ROUND_EXCEPTION))
 
     const token1FromProtocolFee = protocolFeeLPToknesReceived
-      .mul(await token1.balanceOf(wethPair.address)).div(await wethPair.totalSupply());
+      .mul(await token1.balanceOf(wethToken1Pair.address)).div(await wethToken1Pair.totalSupply());
     const wethFromProtocolFee = protocolFeeLPToknesReceived
-      .mul(await WETH.balanceOf(wethPair.address)).div(await wethPair.totalSupply());
+      .mul(await WETH.balanceOf(wethToken1Pair.address)).div(await wethToken1Pair.totalSupply());
 
 
-    const swapFee = BigNumber.from(await wethPair.swapFee())
-    const token1ReserveBeforeSwap = (await token1.balanceOf(wethPair.address)).sub(token1FromProtocolFee)
-    const wethReserveBeforeSwap = (await WETH.balanceOf(wethPair.address)).sub(wethFromProtocolFee)
+    const swapFee = BigNumber.from(await wethToken1Pair.swapFee())
+    const token1ReserveBeforeSwap = (await token1.balanceOf(wethToken1Pair.address)).sub(token1FromProtocolFee)
+    const wethReserveBeforeSwap = (await WETH.balanceOf(wethToken1Pair.address)).sub(wethFromProtocolFee)
     const wethFromToken1FromProtocolFee = await getAmountOutSync(
       token1IsFirstToken ? token1ReserveBeforeSwap : wethReserveBeforeSwap,
       token1IsFirstToken ? wethReserveBeforeSwap : token1ReserveBeforeSwap,
@@ -194,11 +195,11 @@ describe('DXswapFeeReceiver', () => {
 
     const protocolFeeReceiverBalanceBeforeTake = await provider.getBalance(protocolFeeReceiver.address)
 
-    await feeReceiver.connect(dxdao).takeProtocolFee([wethPair.address], overrides)
+    await feeReceiver.connect(dxdao).takeProtocolFee([wethToken1Pair.address], overrides)
 
     expect(await token1.balanceOf(feeReceiver.address)).to.eq(0)
     expect(await WETH.balanceOf(feeReceiver.address)).to.eq(0)
-    expect(await wethPair.balanceOf(feeReceiver.address)).to.eq(0)
+    expect(await wethToken1Pair.balanceOf(feeReceiver.address)).to.eq(0)
     expect(await provider.getBalance(feeReceiver.address)).to.eq(0)
 
     expect((await provider.getBalance(protocolFeeReceiver.address)))
@@ -265,103 +266,6 @@ describe('DXswapFeeReceiver', () => {
     })
 
   it(
-    'should receive only tokens when extracting fee from both token2-tonken3 pair and token2-token4 pair',
-    async () => {
-      const tokenAmount = expandTo18Decimals(100);
-      const amountIn = expandTo18Decimals(50);
-
-      await token2.transfer(pair23.address, tokenAmount)
-      await token3.transfer(pair23.address, tokenAmount)
-      await pair23.mint(dxdao.address, overrides)
-
-      let amountOut = await getAmountOut(pair23, token2.address, amountIn);
-      await token2.transfer(pair23.address, amountIn)
-      await pair23.swap(
-        (token2.address < token3.address) ? 0 : amountOut,
-        (token2.address < token3.address) ? amountOut : 0,
-        dxdao.address, '0x', overrides
-      )
-
-      amountOut = await getAmountOut(pair23, token3.address, amountIn);
-      await token3.transfer(pair23.address, amountIn)
-      await pair23.swap(
-        (token2.address < token3.address) ? amountOut : 0,
-        (token2.address < token3.address) ? 0 : amountOut,
-        dxdao.address, '0x', overrides
-      )
-
-      let protocolFeeToReceive = await calcProtocolFee(pair23, factory);
-
-      await token2.transfer(pair23.address, expandTo18Decimals(10))
-      await token3.transfer(pair23.address, expandTo18Decimals(10))
-      await pair23.mint(dxdao.address, overrides)
-
-      const protocolFeeLPpair23 = await pair23.balanceOf(feeReceiver.address);
-      expect(protocolFeeLPpair23.div(ROUND_EXCEPTION))
-        .to.be.eq(protocolFeeToReceive.div(ROUND_EXCEPTION))
-
-      await token2.transfer(pair24.address, tokenAmount)
-      await token4.transfer(pair24.address, tokenAmount)
-      await pair24.mint(dxdao.address, overrides)
-
-      amountOut = await getAmountOut(pair24, token2.address, amountIn);
-      await token2.transfer(pair24.address, amountIn)
-      await pair24.swap(
-        (token2.address < token4.address) ? 0 : amountOut,
-        (token2.address < token4.address) ? amountOut : 0,
-        dxdao.address, '0x', overrides
-      )
-
-      amountOut = await getAmountOut(pair24, token4.address, amountIn);
-      await token4.transfer(pair24.address, amountIn)
-      await pair24.swap(
-        (token2.address < token4.address) ? amountOut : 0,
-        (token2.address < token4.address) ? 0 : amountOut,
-        dxdao.address, '0x', overrides
-      )
-
-      protocolFeeToReceive = await calcProtocolFee(pair24, factory);
-
-      await token2.transfer(pair24.address, expandTo18Decimals(10))
-      await token4.transfer(pair24.address, expandTo18Decimals(10))
-      await pair24.mint(dxdao.address, overrides)
-
-      const protocolFeeLPPair24 = await pair24.balanceOf(feeReceiver.address);
-      expect(protocolFeeLPPair24.div(ROUND_EXCEPTION))
-        .to.be.eq(protocolFeeToReceive.div(ROUND_EXCEPTION))
-
-      const token2FromPair23 = protocolFeeLPpair23
-        .mul(await token2.balanceOf(pair23.address)).div(await pair23.totalSupply());
-      const token3FromPair23 = protocolFeeLPpair23
-        .mul(await token3.balanceOf(pair23.address)).div(await pair23.totalSupply());
-      const token2FromPair24 = protocolFeeLPPair24
-        .mul(await token2.balanceOf(pair24.address)).div(await pair24.totalSupply());
-      const token4FromPair24 = protocolFeeLPPair24
-        .mul(await token4.balanceOf(pair24.address)).div(await pair24.totalSupply());
-
-      const protocolFeeReceiverBalance = await provider.getBalance(protocolFeeReceiver.address)
-
-      await feeReceiver.connect(dxdao).takeProtocolFee([pair23.address, pair24.address], overrides)
-
-      expect(await provider.getBalance(protocolFeeReceiver.address)).to.eq(protocolFeeReceiverBalance.toString())
-
-      expect(await token2.balanceOf(feeReceiver.address)).to.eq(0)
-      expect(await token3.balanceOf(feeReceiver.address)).to.eq(0)
-      expect(await token4.balanceOf(feeReceiver.address)).to.eq(0)
-      expect(await WETH.balanceOf(feeReceiver.address)).to.eq(0)
-      expect(await provider.getBalance(feeReceiver.address)).to.eq(0)
-
-      expect((await provider.getBalance(protocolFeeReceiver.address)))
-        .to.be.eq(protocolFeeReceiverBalance)
-      expect((await token3.balanceOf(fallbackReceiver.address)))
-        .to.be.eq(token3FromPair23)
-      expect((await token4.balanceOf(fallbackReceiver.address)))
-        .to.be.eq(token4FromPair24)
-      expect((await token2.balanceOf(fallbackReceiver.address)))
-        .to.be.eq(token2FromPair23.add(token2FromPair24))
-    })
-
-  it(
     'should only allow owner to transfer ownership',
     async () => {
       await expect(feeReceiver.connect(other).transferOwnership(other.address, overrides))
@@ -370,6 +274,7 @@ describe('DXswapFeeReceiver', () => {
       expect(await feeReceiver.owner()).to.be.eq(tokenOwner.address)
     })
 
+  // Where pairs with weth don't exist
   it(
     'should only allow owner to change receivers',
     async () => {
