@@ -1,3 +1,4 @@
+//SPDX-License-Identifier: MIT
 pragma solidity =0.5.16;
 
 // helper methods for interacting with ERC20 tokens and sending ETH that do not consistently return true/false
